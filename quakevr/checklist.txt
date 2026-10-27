@@ -1,0 +1,25 @@
+# Quake VR playtest checklist (VR menu > Checklist). One line = one quick check; tick what works, tell me what doesn't.
+# Merged and streamlined 2026-10-06 from the previous list and CHECKLIST_ARCHIVE_20261005.txt
+# (both kept in git history). Reload List refreshes this page; no rebuild needed.
+
+[Firing range: combat and dummies]
+Toolgun (on the range north of the crowbar, or impulse 169): B/Y opens its menu on the gun, other hand's laser clicks; Spawn (ghost, X/A + sticks to move/turn, picker), Remove (red glow), Physgun (hold trigger to drag, other trigger freezes), Scale (face/corner handles), Joints (weld/ball/hinge/slider/rope/spring), Cheats page; menu readable/placed well? grip fit? (docs/vr-port/TOOLGUN.md)
+
+[New this week]
+West stairs / lava / water: MG1 start's west-facing stairs with your head naturally low, walking slowly and jumping (a short catch at the very top crest may remain); step into lava and out: you keep burning 3 s (Burning > You Burn After Lava); shove a grunt off vrstart's island near the shore (gets up on the slope) and far out (gives up after ~3 s and sinks)
+Bodies in liquids: throw corpses/knocked-down enemies into water, slime, lava: braked on entry, float face down (knights/enforcers sink), no fall damage into deep liquid; in lava they burn and gib after 4 s (Ragdolls > In Water, Slime and Lava; Gameplay > Liquid Breaks Falls; Burning > Corpses); a knocked-down enemy getting up in deep water is untested
+MG3 armour shards: force-grab, then hip holster / pouch / chest gives armour, walking over them doesn't
+MG3 UNLOCKED (single player; revert 405e4213 to re-lock): Official Campaigns > Dawn of the Machine starts `start`, coop refused; Bloody Nightmare row after discovery; Super Axe contacts + 2nd-hit lightning burst; axe buttons by axe/fists/gun butt/thrown prop; lore readable; teleports/low ceilings comfortable; new monsters' hit zones/gore/ragdolls; upgrades/runes carry through the hub; both endings + credits; installer Your PC page says ready
+Relighting without ericw-tools: the page offers Download ericw-tools (27.5 MB) with a progress bar and Cancel, then relights (test with vr_relight_tool_dir pointed at an empty folder)
+MG3 Shub (boss2, or Debug spawner Thing 60): pillars sinking under you are comfortable; her zombies rise and ragdoll; sweeping beam and blasts readable; lights go out at her death and the credits follow
+MG3 Chthon (boss map, or Debug spawner Thing 50): comfort fade at both arena moves (Locomotion > Comfort > Fade on Scripted Teleports: 0.6 vs 1.2 s); head zone; bat his spheres back; fight length fair with arm hits at 0.35x; finale gibs then credits
+
+[Menus and maps]
+MG1 developer tests: rune returns, electrode buttons, Horde, revival; quake vibration is comfortable
+MG1 Horde (horde1, horde5 bosses): die holding fire, nothing; let go and press: the arena restarts; coop: a dead teammate comes back at wave end
+
+[Tune]
+Weapon damage, grapple, stamina costs, roll weight and throw damage
+
+[Record]
+Record new melee takes: the melee test suite can't run without them
