@@ -1,2 +1,0 @@
-# QuakeVR-Monolith-Edition
-
