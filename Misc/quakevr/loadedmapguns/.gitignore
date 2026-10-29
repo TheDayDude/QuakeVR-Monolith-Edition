@@ -1,3 +1,0 @@
-# The tests' own logs and the e1m3.ent fixture they move aside
-*.log
-*.from-tests
