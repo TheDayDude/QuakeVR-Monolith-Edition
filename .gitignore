@@ -1,0 +1,34 @@
+Windows/VisualStudio/.vs/
+Windows/VisualStudio/Build-*/
+Windows/VisualStudio/ironwail.vcxproj.user
+Quake/*.o
+Quake/*.d
+Quake/*.res
+Quake/*.exe
+Quake/ironwail
+build/
+/.vs
+/out/
+
+# QVR: Quake VR's build and packaging output (quakevr/ and Quake/vr/ have their own .gitignore: the game folder's
+# files go there)
+/build-cmake/
+/dist/
+__pycache__/
+/build.log
+.venv-transcribe/
+.vscode/
+Misc/quakevr/scratch/
+# The agent kit's per-worktree output (qvr-kit: build.sh, eval.sh, run.sh)
+/scratch/
+/evaltakes/
+Windows/VisualStudio/zancle.vcxproj.user
+
+# id's textures, made from your own id1 paks by Misc/trenchbroom/make_id_wad.py (never committed)
+quakevr/wads/id_textures.wad
+scratch_review/
+scratch-review/
+
+# Local asset generated from the installed QBJ3 model
+/mvr/progs/rover_body.mdl
+/mvr/*.lno
