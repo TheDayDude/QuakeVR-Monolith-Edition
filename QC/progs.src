@@ -22,6 +22,9 @@ combat.qc	// fight.qc decrufted away
 items.qc
 mvr_hub.qc
 item_health_armor.qc
+mvr_pistol.qc
+mvr_flak.qc
+mvr_nailgun.qc
 item_weap_ammo.qc
 item_powerups.qc
 item_keys_runes.qc

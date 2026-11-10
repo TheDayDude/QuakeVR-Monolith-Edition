@@ -55,6 +55,10 @@ void() W_Precache =
 											// 2 Pistol
 	precache_model ("progs/bullet_casing.mdl");
 	precache_model ("progs/pistol_mag.mdl");
+	precache_model ("progs/v_mvrflak.mdl");
+	precache_model ("progs/mvr_flakshell.mdl");
+	precache_model("progs/v_mvrnail.mdl");
+	precache_model("progs/mvr_nailmag.mdl");
 	precache_model ("progs/tracer_long_yellow.mdl");
 	precache_sound ("pistol/deadlock_reload.wav");
 	precache_sound ("pistol/pistol_shoot.wav");
@@ -534,6 +538,9 @@ float(float weap, entity cl) W_CheckWeapon =
 
 	if (!(cl.items & weap)) return WEAPONSTAT_NOWEAPON;
 
+	if (weap == IT_NAILGUN && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
+	if (weap == IT_SUPER_SHOTGUN && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
+
 	if (cl.(ammofieldlist[weapcl.ammofield]) < weapcl.ammo_usage) {
 		return WEAPONSTAT_NOAMMO;
 	}
@@ -584,7 +591,7 @@ float(float weap, float forcereset = FALSE) W_ChangeWeapon =
 		return weapstat;
 	}
 
-	if (time > self.pistol_lastreload_time + 3.75 && self.pistol_ammo_count <= 0)	
+	if (!(self.vrbits0 & MVR_TRACKED) && time > self.pistol_lastreload_time + 3.75 && self.pistol_ammo_count <= 0)	
 		self.pistol_ammo_count = 10;	// reset pistol reload
 
 	self.weaponreload_perc = 0;
@@ -621,7 +628,10 @@ float(float weap, float forcereset = FALSE) W_ChangeWeapon =
 	weapcl.idlefunction();
 	// whatever drawfunction does will probably override an idlefunction's actions if there's one.
 	// in this case the end of the draw loop must call idlefunction
-	weapcl.drawfunction(); 
+	if (weap == IT_SUPER_SHOTGUN && (self.vrbits0 & MVR_TRACKED))
+		self.weaponmodel = "progs/v_mvrflak.mdl";
+	else if (weap == IT_NAILGUN && (self.vrbits0 & MVR_TRACKED)) self.weaponmodel = "progs/v_mvrnail.mdl";
+	else weapcl.drawfunction(); 
 	
 			
 	return weapstat;
@@ -721,6 +731,7 @@ float(float imp) W_ChangeSlot =
 	// Pistol Manual Reload
 	if (imp == 2 && self.weapon == IT_SHOTGUN)
 	{
+		if (self.vrbits0 & MVR_TRACKED) return WEAPONSTAT_AVAILABLE;
 		if (self.pistol_ammo_count != 10)
 			weaponanim_reloadpistol();
 		

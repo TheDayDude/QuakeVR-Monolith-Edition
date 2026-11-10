@@ -2169,6 +2169,7 @@ from VR_End2D). With vr_hud_mode 0 the canvas gets a classic status bar, for a h
 */
 static void SCR_DrawSbar (void)
 {
+    if (key_dest == key_menu) return;
 	int where = VR_SbarInCanvas ();
 	if (where == 2)
 	{
@@ -2183,6 +2184,7 @@ static void SCR_DrawSbar (void)
 
 static void SCR_DrawWindowHud (void)
 {
+    if (key_dest == key_menu) return;
 	GL_Set2D ();
 	Sbar_Draw ();
 	Draw_Flush ();

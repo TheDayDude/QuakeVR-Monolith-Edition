@@ -7332,7 +7332,7 @@ struct Page
 // reorganized"). Links find their page by its builder (pageIndex).
 const Page pages[] = {
     {"VR Settings", pageMain, nullptr, LevelStandard},                                     // 0
-    {"Advanced VR Options", pageAdvanced, pageMain},                        // 1
+    {"Advanced VR Settings", pageAdvanced, pageMain},                        // 1
     {"Play", pagePlay, pageAdvanced},                                       // 2
     {"World", pageGameplay, pageAdvanced},                                  // 3 (Gameplay before)
     {"Parry and Bash", pageParryBash, pageCombat},                          // 4 (Parry, Bash and Headbutt before)
@@ -7937,9 +7937,7 @@ void resetAll(); // (below: after the pages' building)
 
 // VR Settings (Options > VR Settings, the main menu's VR Settings, the corner's): what a new player sets, each in a few
 // words, in the order they come to it. Every other setting is under Advanced VR Options (ROUND21.md, "VR Settings for
-// first-time players"), and so is each row here, on its topic's page. No link to them here (nor to Search): the main
-// menu's Advanced VR row and the corner's Advanced VR and Search buttons open them, and the trees of Search and of the
-// boards' menu paths start at both pages (menuRoots).
+// first-time players"), and so is each row here, on its topic's page. The first entry opens Advanced VR Settings.
 za::Vector<Item> pageMain()
 {
     const bool snap = vr_snap_turn.value > 0.f;
@@ -7950,6 +7948,8 @@ za::Vector<Item> pageMain()
                               "from their shipped place (0), in Quake's units (about 3 cm). Shown on your body while "
                               "you choose here.";
     za::Vector<Item> list{
+        open("Advanced VR Settings", pageIndex(pageAdvanced))
+            .help("Open all VR gameplay, display and graphics settings. Enables Advanced menu detail."),
         header("Height Calibration"),
         slider("Height", vr_height_calibration, 1.f, 2.2f, 0.01f, "%.2f m").extend(0.5f, 3.f)
             .help("Your real height: it puts your eyes at the right height in the game and fits the body to you. Set "
@@ -9724,7 +9724,8 @@ int levelOverride = -1;
         return false;
     }
     const bool link = item.kind == Item::Action && item.page >= 0 && item.page < pageCount && !item.actionArg;
-    return !link || pages[item.page].level <= level;
+    // The entry to advanced settings must be reachable from Standard detail.
+    return !link || item.page == PageAdvanced || pages[item.page].level <= level;
 }
 
 // The page's rows as shown: a header with nothing left under it (its rows all above the level) goes too.
@@ -10270,6 +10271,11 @@ void closeDropDown(); // (the drop-down lists, below: a page shown closes the on
 // -1 once elsewhere.
 void showPage(int target)
 {
+    // Entering advanced settings reveals their pages; keep Developer detail if already selected.
+    if(target == PageAdvanced && menuLevel() < LevelAdvanced)
+    {
+        Cvar_SetValueQuick(&vr_menu_level, static_cast<float>(LevelAdvanced));
+    }
     closeDropDown();
     page = target;
     weightPageShown(pages[page].build); // a weight page: what is in the hand now
@@ -11981,6 +11987,11 @@ extern "C" int VR_MenuToggleCloses()
 extern "C" void VR_Menu_Open()
 {
     openFromAnywhere(PageMain);
+    // Always expose the advanced-settings entry, even when saved row anchors
+    // would restore a calibration row with the first entry scrolled out of view.
+    const auto& list = items(PageMain);
+    cursors[PageMain] = firstSelectable(list);
+    scrolls[PageMain] = 0;
 }
 
 // The main menu's VR Settings and Advanced VR rows (menu.c).

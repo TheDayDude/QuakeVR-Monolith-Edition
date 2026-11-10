@@ -24,6 +24,8 @@ float() weaponanim_pistol =
 	if (self.attack_finished > time)
 		return FALSE;
 
+	if ((self.vrbits0 & MVR_TRACKED) && (self.attackhold || self.mvr_pistol_phase || self.pistol_ammo_count <= 0)) return FALSE;
+
 	// detects if a reload is still happening without having to rely on attack_finished
 	if (self.think == weaponanim_reloadpistol_loop) 
 		return FALSE;
@@ -81,7 +83,7 @@ void() weaponanim_pistol_loop =
 {	
 	if (self.weaponframe == 12) Eject_BulletCasing();
 	
-	if (self.pistol_ammo_count <= 0 && time > (self.attack_finished - 0.1))
+	if (!(self.vrbits0 & MVR_TRACKED) && self.pistol_ammo_count <= 0 && time > (self.attack_finished - 0.1))
 	{
 		weaponanim_reloadpistol(); 
 		return;
@@ -176,6 +178,11 @@ void() W_FirePistol =
 	vector org_gun = self.origin + self.view_ofs - v_up * 8 + v_right *  8;
 	vector org_eye = self.origin + self.view_ofs;
 	vector spread;
+	if (self.vrbits0 & MVR_TRACKED) {
+		makevectors(self.shotrot);
+		org_eye = self.muzzlepos;
+		org_gun = org_eye;
+	}
 
 	spread_x = 0.015; // horizontal
 	spread_y = 0.015; // vertical
@@ -378,6 +385,7 @@ void() Drop_PistolMag =
 
 	vector vel = (v_forward * 120) + (v_right * 240) + (v_up * 40);
 	vector org = self.origin + self.view_ofs + (v_forward * 8) + (v_right * 12) + (v_up * -24);
+	if (self.vrbits0 & MVR_TRACKED) { org = self.handpos; vel = '0 0 -30'; }
 	
 	entity mag = toss_projectile(org, vel, "pistolmag");
 	mag.lifetime_finished = time + 2;

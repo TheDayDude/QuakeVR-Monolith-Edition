@@ -45,7 +45,13 @@ alias gohome "mvr_campaign hub"
 vr_maps_fetch 0
 vr_grade 0
 vr_body_mode 0
-r_drawviewmodel 0
+r_drawviewmodel 1
+bind RTRIGGER +attack
+bind LTRIGGER +offhandattack
+bind RSHOULDER +grabmain
+bind LSHOULDER +graboff
+alias mvr_mag_release ""
+bind BBUTTON mvr_mag_release
 bind ABUTTON +jump
 bind LTHUMB +speed
 stuffcmds

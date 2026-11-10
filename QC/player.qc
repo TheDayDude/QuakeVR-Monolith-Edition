@@ -584,6 +584,8 @@ void() PlayGibSound =
 
 void() PlayerDie =
 {
+	MVR_ClearHand();
+	MVR_DropFlakShell();
 	local	float	i;
 	
 	self.items = self.items - (self.items & IT_INVISIBILITY);

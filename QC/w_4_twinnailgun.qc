@@ -23,6 +23,7 @@
 
 float() weaponanim_twinnailgun =
 {
+	if (self.vrbits0 & MVR_TRACKED) return FALSE;
 	// handled via animation loop4
 	if (self.attackhold && self.attack_finished > time)
 		return FALSE;
@@ -119,6 +120,12 @@ void(float offs) W_FireTwinNailgun =
 	makevectors(self.v_angle);
 	vector dir = aim(self, AUTOAIM_DIST);
 	vector org = self.origin + self.view_ofs + v_forward*11 + v_right*offs - v_up*6;
+
+	if (self.vrbits0 & MVR_TRACKED) {
+		makevectors(offs < 0 ? self.offshotrot : self.shotrot);
+		dir = v_forward;
+		org = offs < 0 ? self.offmuzzlepos : self.muzzlepos;
+	}
 
 	// default sv_maxvelocity is 2000, any higher leads to weird 
 	// angular offsets caused by clamping the velocity

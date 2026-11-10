@@ -1418,36 +1418,24 @@ static void M_Confirm_Mousemove (float x, float y)
 //=============================================================================
 /* MAIN MENU */
 
-int	m_main_cursor = 5; // QVR: MAIN_CAMPAIGNS (below): the playing group's first row (Select Campaign), below the VR rows
+int m_main_cursor = 0; // Single Player
 int m_main_mods;
 qboolean m_main_continue_offered; // QVR: the cursor put on Continue once, at the menu's first opening with a save to continue
 
 enum
 {
-	MAIN_CONTINUE, // QVR: the newest save of a campaign's map (vr_continue.cpp), the first row; shown only when there is one
-	MAIN_VRCALIBRATION, // QVR: the first-time setup (vr_setup.hpp)
-	MAIN_VRTUTORIAL, // QVR: the tutorial (as the Play page's Tutorial), confirmed
-	MAIN_VRHUB, // QVR: the VR hub (vr_hub_map, as the Play page's VR Hub), confirmed
-	MAIN_VRSETTINGS, // QVR: the VR Settings (as Options > VR Settings), after the VR places; Back from them to this menu
-	MAIN_CAMPAIGNS, // QVR: Select Campaign, the official campaigns' page (was Single Player > Official Campaigns)
-	MAIN_SINGLEPLAYER,
-	MAIN_MULTIPLAYER,
-	MAIN_MAPLIBRARY, // QVR: Download Maps, the map browser (vr_menu_maps.inc)
-	MAIN_PLAYCUSTOM, // QVR: Play Custom Map, Ironwail's Levels (the maps installed)
-	MAIN_OPTIONS,
-	MAIN_VRADVANCED, // QVR: the Advanced VR Options (as the corner's Advanced VR)
-	MAIN_MODS, // QVR: shown with vr_menu_main_mods only (Options > Mods otherwise)
-	MAIN_QUIT, // QVR: no Help/Ordering row
-
-	MAIN_ITEMS,
+    MAIN_SINGLEPLAYER, MAIN_MULTIPLAYER, MAIN_OPTIONS, MAIN_HELP,
+    MAIN_VRCALIBRATION, MAIN_VRSETTINGS, MAIN_VRHUB, MAIN_QUIT,
+    MAIN_CONTINUE, MAIN_VRTUTORIAL, MAIN_CAMPAIGNS, MAIN_MAPLIBRARY,
+    MAIN_PLAYCUSTOM, MAIN_VRADVANCED, MAIN_MODS, MAIN_ITEMS
 };
 
-// QVR: the rows as text, in the lettering of Quake's picture of them (gfx/mainmenu.lmp), cut from id's menu pictures
-// (vr_bigfont.cpp), so that VR Calibration looks like the others.
 static const char *const m_main_labels[MAIN_ITEMS] =
 {
-	"Continue", "VR Calibration", "VR Tutorial", "VR Hub", "VR Settings", "Select Campaign", "Single Player", "Multiplayer", "Download Maps",
-	"Play Custom Map", "Options", "Advanced VR", "Mods", "Quit",
+    "Single Player", "Multiplayer", "Options", "Help",
+    "VR Calibration", "VR Settings", "Return to Limbo", "Quit",
+    "Continue", "VR Tutorial", "Select Campaign", "Download Maps",
+    "Play Custom Map", "Advanced VR", "Mods"
 };
 
 const char *M_Main_RowLabel (void) // QVR: menu_vr pos
@@ -1459,9 +1447,8 @@ const char *M_Main_RowLabel (void) // QVR: menu_vr pos
 // for it (Advanced VR > HUD and Menus > Menu; Options > Mods has it).
 static qboolean M_Main_Shown (int item)
 {
-	if (item == MAIN_CONTINUE) // QVR: only with a save to continue (vr_continue.cpp)
-		return VR_ContinueAvailable ();
-	return item != MAIN_MODS || (m_main_mods && VR_MenuMainShowsMods ());
+	return item == MAIN_SINGLEPLAYER || item == MAIN_MULTIPLAYER || item == MAIN_OPTIONS || item == MAIN_HELP ||
+        item == MAIN_QUIT || item == MAIN_VRCALIBRATION || item == MAIN_VRHUB;
 }
 
 // QVR: the rows in groups, a gap above each but the first: the VR rows (VR Calibration, VR Tutorial, VR Hub, VR Settings:
@@ -1471,9 +1458,7 @@ static qboolean M_Main_Shown (int item)
 // vrfiringrange_2026-10-08_00-02-55).
 static qboolean M_Main_GroupStart (int item)
 {
-	if (item == MAIN_VRCALIBRATION) // QVR: Continue on its own above the VR rows, when shown
-		return M_Main_Shown (MAIN_CONTINUE);
-	return item == MAIN_CAMPAIGNS || item == MAIN_MAPLIBRARY || item == MAIN_OPTIONS || item == MAIN_QUIT;
+	return item == MAIN_VRCALIBRATION || item == MAIN_QUIT;
 }
 
 void M_Menu_Main_f (void)
@@ -1503,7 +1488,7 @@ void M_Menu_Main_f (void)
 		m_main_cursor = MAIN_CONTINUE;
 	}
 	if (!M_Main_Shown (MAIN_CONTINUE) && m_main_cursor == MAIN_CONTINUE)
-		m_main_cursor = MAIN_CAMPAIGNS;
+		m_main_cursor = MAIN_SINGLEPLAYER;
 }
 
 
@@ -1585,7 +1570,7 @@ void M_Main_Draw (void)
 
 	// QVR: the rows as text in the picture's letters when the pictures give every one (a mod's own pictures may not):
 	// else the picture's rows, the others in the mods' fallback row's letters.
-	text = true;
+	text = false; // Monolith uses stone button artwork for every main-menu row.
 	for (i = 0; i < MAIN_ITEMS; i++)
 		if (M_Main_Shown (i) && !VR_BigFont_CanDraw (m_main_labels[i]))
 			text = false;
@@ -1616,6 +1601,7 @@ void M_Main_Draw (void)
 			{
 			case MAIN_SINGLEPLAYER: M_DrawSubpic (72, row, p, 0, 0, p->width, 20); break;
 			case MAIN_MULTIPLAYER: M_DrawSubpic (72, row, p, 0, 20, p->width, 20); break;
+			case MAIN_HELP: M_DrawSubpic (72, row, p, 0, 60, p->width, 20); break;
 			case MAIN_OPTIONS: M_DrawSubpic (72, row, p, 0, 40, p->width, 20); break;
 			case MAIN_QUIT: M_DrawSubpic (72, row, p, 0, 80, p->width, p->height - 80); break;
 			case MAIN_MODS:
@@ -1625,13 +1611,13 @@ void M_Main_Draw (void)
 					M_PrintEx (74, row + 1, 16, "MODS");
 				break;
 			case MAIN_CONTINUE: M_PrintEx (74, row + 1, 16, "CONTINUE"); break;
-			case MAIN_VRCALIBRATION: M_PrintEx (74, row + 1, 16, "VR CALIBRATION"); break;
+			case MAIN_VRCALIBRATION: M_DrawTransPic (72, row, Draw_CachePic ("gfx/vr_calibration.lmp")); break;
 			case MAIN_VRTUTORIAL: M_PrintEx (74, row + 1, 16, "VR TUTORIAL"); break;
-			case MAIN_VRHUB: M_PrintEx (74, row + 1, 16, "VR HUB"); break;
+			case MAIN_VRHUB: M_DrawTransPic (72, row, Draw_CachePic ("gfx/vr_limbo.lmp")); break;
 			case MAIN_CAMPAIGNS: M_PrintEx (74, row + 1, 16, "SELECT CAMPAIGN"); break;
 			case MAIN_MAPLIBRARY: M_PrintEx (74, row + 1, 16, "DOWNLOAD MAPS"); break;
 			case MAIN_PLAYCUSTOM: M_PrintEx (74, row + 1, 16, "PLAY CUSTOM MAP"); break;
-			case MAIN_VRSETTINGS: M_PrintEx (74, row + 1, 16, "VR SETTINGS"); break;
+			case MAIN_VRSETTINGS: M_DrawTransPic (72, row, Draw_CachePic ("gfx/vr_settings.lmp")); break;
 			case MAIN_VRADVANCED: M_PrintEx (74, row + 1, 16, "ADVANCED VR"); break;
 			}
 		}
@@ -1689,7 +1675,7 @@ static void M_Main_StartHub (void)
 	IN_Activate ();
 	key_dest = key_game;
 	m_state = m_none;
-	VR_StartHub ();
+	Cbuf_AddText ("gohome\n");
 }
 
 void M_Main_Key (int key)
@@ -1749,12 +1735,9 @@ void M_Main_Key (int key)
 				"Start", "Cancel", 0.f, M_Main_StartTutorial);
 			break;
 
-		case MAIN_VRHUB: // QVR: the hub, as the Play page's VR Hub (VR_StartHub)
-			M_Confirm (sv.active
-				? "Go to the VR Hub?\n\nThe game in progress ends: you go\nto the hub, where Quake VR starts."
-				: "Go to the VR Hub?\n\nWhere Quake VR starts.",
-				"Go", "Cancel", 0.f, M_Main_StartHub);
-			break;
+		case MAIN_VRHUB:
+            M_Main_StartHub ();
+            break;
 
 		case MAIN_SINGLEPLAYER:
 			M_Menu_SinglePlayer_f ();
@@ -1776,6 +1759,9 @@ void M_Main_Key (int key)
 			M_Menu_LevelsFrom ();
 			break;
 
+		case MAIN_HELP:
+            M_Menu_Help_f ();
+            break;
 		case MAIN_OPTIONS:
 			M_Menu_Options_f ();
 			break;
@@ -7995,8 +7981,8 @@ void M_Draw (void)
 	}
 
 	GL_SetCanvas (CANVAS_MENU); //johnfitz
-	VR_MenuDrawBannerColumn (); // QVR: the VR menu style's banner, under the corner's buttons
-	VR_MenuDrawVersion (); // QVR: the version label in the bottom right corner (under the page: what opens over it hides it)
+	/* Corner overlays removed. */ // QVR: the VR menu style's banner, under the corner's buttons
+	/* Corner overlays removed. */ // QVR: the version label in the bottom right corner (under the page: what opens over it hides it)
 
 	switch (M_GetBaseState (m_state))
 	{
@@ -8102,8 +8088,8 @@ void M_Draw (void)
 		break;
 	}
 
-	VR_MenuDrawOverlay (); // QVR: the "Back to game" button
-	VR_MenuDrawStatus (); // QVR: the status box (vr_menu_status)
+	/* Corner overlays removed. */ // QVR: the "Back to game" button
+	/* Corner overlays removed. */ // QVR: the status box (vr_menu_status)
 	draw_textoutline = 0.f; // QVR
 	Draw_SetMenuRecolor (recolor); // QVR
 

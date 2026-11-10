@@ -32,7 +32,12 @@ float() weaponanim_flakshotgun =
 		return FALSE;
 	}
 
-	self.currentammo = self.ammo_shells = self.ammo_shells - 1;
+	float tracked = !!(self.vrbits0 & MVR_TRACKED);
+    if (tracked) {
+        if (self.flak_chamber != 1 || self.flak_stroke) return FALSE;
+        self.flak_chamber = 2;
+        self.currentammo = self.flak_tube;
+    } else self.currentammo = self.ammo_shells = self.ammo_shells - 1;
 
 	self.attack_finished = time + 1;
 	
@@ -43,6 +48,7 @@ float() weaponanim_flakshotgun =
 	SuperDamageSound();
 	W_FireFlakShotgun();
 
+	if (tracked) return TRUE;
 	self.weaponframe = 11;
 	
 	self.think = weaponanim_flakshotgun_loop;
@@ -93,7 +99,12 @@ void() W_FireFlakShotgun =
 	vector spread = '270 60 0';
 	vector view_origin = self.origin + self.view_ofs + v_forward*12 - v_up*4; //+ v_right* 8;
 
-	vector mvel;
+	if (self.vrbits0 & MVR_TRACKED) {
+        makevectors(self.handrot);
+        view_origin = self.handpos + v_forward*28 + v_up*5;
+        makevectors(self.shotrot);
+    }
+    vector mvel;
 	entity fl;
 	while (shotcount > 0)
 	{

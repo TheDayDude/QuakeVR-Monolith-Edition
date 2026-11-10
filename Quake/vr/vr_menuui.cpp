@@ -960,6 +960,7 @@ bool active()
 
 bool toolbarShown()
 {
+    return false;
     if(active())
     {
         return true;
@@ -2139,6 +2140,7 @@ extern "C" void VR_MenuDrawOverlay()
 // other end), A or Enter presses, B gives it back; a click of either stick takes it (or gives it back).
 extern "C" int VR_MenuKey(int key, int repeat)
 {
+    return 0;
     if(key == K_MOUSE1 && !repeat && !M_WaitingForKeyBinding() && menuui::versionLinkPress())
     {
         toolbar.focused = -1;
@@ -2319,7 +2321,7 @@ void qvr::menuui::openMenu(int state)
 // player game). Once: the next time, the main menu again unless it closed that way again.
 extern "C" int VR_MenuMouseOnButtons(float x, float y)
 {
-    return (menuui::toolbarShown() && toolAt(x, y) >= 0) || menuui::versionLinkAt(x, y);
+    return 0;
 }
 
 extern "C" int VR_MenuReopen()

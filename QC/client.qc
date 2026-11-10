@@ -74,10 +74,13 @@ void() SetChangeParms =
 	parm8 = self.weapon;
 	parm9 = self.armortype;
 	parm10 = self.items_qbj;
+	parm11 = self.flak_tube + 16*self.flak_chamber + 64*self.flak_rack;
+	if (self.flak_held) parm4++;
 }
 
 void() SetNewParms =
 {
+	parm11 = 0;
 	parm1 = IT_SHOTGUN | IT_AXE;
 	parm2 = 100;
 	parm4 = 4; // Reduced from 24 to 4, Shotgun give +16
@@ -109,6 +112,7 @@ void() SetNewParms =
 // shells and nails are kept over on respawn
 void() SetCoopParms =
 {
+	parm11 = 0;
 	parm1 = self.items & IT_WEAPONS;
 	parm2 = 100;
 	parm4 = max(16,self.ammo_shells); // Reduced from 24 to 16 for Co-op
@@ -148,6 +152,9 @@ void() DecodeLevelParms =
 	self.ammo_cells = parm7;
 	self.armortype = parm9;
 	self.items_qbj = parm10;
+	self.flak_tube = parm11 & 15;
+	self.flak_chamber = floor(parm11/16) & 3;
+	self.flak_rack = floor(parm11/64);
 	
 	//self.weapon = parm8;
 	W_ChangeWeapon(parm8, FALSE);
@@ -642,6 +649,9 @@ void() PutClientInServer =
 	self.invincible_finished = 0;
 	self.invincible_time = 0;
 	self.effects = 0;
+	MVR_ResetPistol();
+	MVR_ResetFlak();
+	MVR_ResetNails();
 	self.pistol_ammo_count = 10;
 	self.enemy = world;
 
@@ -1907,6 +1917,9 @@ void() PlayerPostThink =
 		ImpulseCommands();
 
 	// do weapon stuff
+	MVR_NailFrame();
+	MVR_PistolFrame();
+	MVR_FlakFrame();
 	W_WeaponFrame ();
 	// do health stuff
 	PlayerHealthTick();
@@ -2078,6 +2091,9 @@ called when a player disconnects from a server
 */
 void() ClientDisconnect =
 {
+	MVR_ClearHand();
+	MVR_DropFlakShell();
+	MVR_ResetNails();
 	if (gameover)
 		return;
 	// if the level end trigger has been activated, just return
