@@ -77,7 +77,7 @@ void() MVR_FlakFrame =
         } else if (!self.flak_open && progress >= 1) {
             self.flak_open = 1;
             if (self.flak_chamber)
-                MVR_LooseShell(self.handpos+v_forward*7+v_up*5, v_up*70+v_right*22, self.flak_chamber == 1);
+                MVR_LooseShell(self.handpos+v_forward*9.3+v_right*1+v_up*4.1, v_up*70+v_right*45, self.flak_chamber == 1);
             self.flak_chamber = 0;
         } else if (self.flak_open && progress < .15) {
             if (self.flak_tube) {
@@ -120,4 +120,5 @@ void() MVR_FlakFrame =
     self.weaponframe = self.flak_rack*6 + floor(progress*5+.5);
     self.currentammo = self.flak_tube + (self.flak_chamber == 1);
 }
+
 

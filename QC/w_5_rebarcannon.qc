@@ -29,7 +29,13 @@ float() weaponanim_rebarcannon =
 		return FALSE;
 	}
 
-	self.currentammo = self.ammo_nails = self.ammo_nails - 10;
+	if (self.vrbits0 & MVR_TRACKED) {
+		if (!self.rebar_live || self.rebar_pull) return FALSE;
+		self.rebar_live = 0;
+        self.rebar_recoil_end = time + .30;
+        MVR_RebarPose(0);
+		self.currentammo = self.rebar_rounds;
+	} else self.currentammo = self.ammo_nails = self.ammo_nails - 10;
 
 	self.attack_finished = time + 1;
 	
@@ -40,6 +46,7 @@ float() weaponanim_rebarcannon =
 	SuperDamageSound();
 	W_FireRebarCannon();
 
+	if (self.vrbits0 & MVR_TRACKED) return TRUE;
 	self.weaponframe = 11;
 	self.think = weaponanim_rebarcannon_loop;
 	self.nextthink = time + 0.05;
@@ -78,6 +85,11 @@ void() W_FireRebarCannon =
 	float base = 1400;
 	
 	vector org = self.origin + self.view_ofs - v_up*8 + v_forward*15;
+	if (self.vrbits0 & MVR_TRACKED) {
+		makevectors(self.handrot);
+		org = self.handpos + v_forward*30 + v_up*6;
+		makevectors(self.shotrot);
+	}
 	vector mvel = v_forward*base + v_up*160;
 	
 	launch_impaler(org, mvel);

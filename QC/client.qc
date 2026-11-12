@@ -75,6 +75,11 @@ void() SetChangeParms =
 	parm9 = self.armortype;
 	parm10 = self.items_qbj;
 	parm11 = self.flak_tube + 16*self.flak_chamber + 64*self.flak_rack;
+	parm11 += 512*self.rebar_rounds + 4096*self.rebar_live;
+	parm11 += 8192*self.mmml_loaded + 16384*self.gren_loaded;
+	if (self.gren_held) parm6++;
+	if (self.mmml_held) parm6 += 4;
+	if (self.rebar_bundle) parm5 += 10*self.rebar_bundle.count;
 	if (self.flak_held) parm4++;
 }
 
@@ -154,7 +159,11 @@ void() DecodeLevelParms =
 	self.items_qbj = parm10;
 	self.flak_tube = parm11 & 15;
 	self.flak_chamber = floor(parm11/16) & 3;
-	self.flak_rack = floor(parm11/64);
+	self.flak_rack = floor(parm11/64) & 7;
+	self.rebar_rounds = floor(parm11/512) & 7;
+	self.gren_loaded = floor(parm11/16384) & 7;
+	self.mmml_loaded = floor(parm11/8192) & 1;
+	self.rebar_live = floor(parm11/4096) & 1;
 	
 	//self.weapon = parm8;
 	W_ChangeWeapon(parm8, FALSE);
@@ -651,6 +660,12 @@ void() PutClientInServer =
 	self.effects = 0;
 	MVR_ResetPistol();
 	MVR_ResetFlak();
+	MVR_StopMMML();
+	MVR_ReturnGrenade();
+	self.gren_wait_release = 0;
+	self.mmml_loaded = self.mmml_wait_release = 0;
+	MVR_ReturnRebar();
+	self.rebar_live = self.rebar_rounds = self.rebar_pull = 0;
 	MVR_ResetNails();
 	self.pistol_ammo_count = 10;
 	self.enemy = world;
@@ -1919,7 +1934,11 @@ void() PlayerPostThink =
 	// do weapon stuff
 	MVR_NailFrame();
 	MVR_PistolFrame();
+	MVR_WrenchFrame();
 	MVR_FlakFrame();
+	MVR_RebarFrame();
+	MVR_MMMLFrame();
+	MVR_GrenadeFrame();
 	W_WeaponFrame ();
 	// do health stuff
 	PlayerHealthTick();
@@ -2093,6 +2112,8 @@ void() ClientDisconnect =
 {
 	MVR_ClearHand();
 	MVR_DropFlakShell();
+	MVR_StopMMML();
+	MVR_ReturnGrenade();
 	MVR_ResetNails();
 	if (gameover)
 		return;

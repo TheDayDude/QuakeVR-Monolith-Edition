@@ -1,6 +1,6 @@
 .float vrbits0, button3, offhand_hotspot;
 .vector handpos, handrot, offhandpos, muzzlepos, shotrot;
-.float mvr_pistol_phase, mvr_grabbing_pistol, mvr_eject_down, mvr_slide_down;
+.float mvr_pistol_phase, mvr_grabbing_weapon, mvr_eject_down, mvr_slide_down;
 .float mvr_slide_grab, mvr_slide_back, mvr_slide_start;
 .entity mvr_mag, nail_main, nail_off, nail_mag;
 float MVR_TRACKED = 16384;
@@ -20,33 +20,35 @@ void() MVR_ResetPistol =
     self.mvr_pistol_phase = self.mvr_eject_down = self.mvr_slide_down = 0;
 }
 
-void() MVR_GrabPistol =
+void() MVR_GrabWeapon =
 {
     entity player = self;
     entity item = world;
     entity closest = world;
     float reach = 18;
-    while ((item = find(item, model, "progs/g_pistol.mdl"))) {
+    for (item = findradius(self.handpos, 32); item; item = item.chain) {
+        if (item.items != IT_SHOTGUN && item.items != IT_LIGHTNING) continue;
         if (item.touch != weapon_touch || item.solid != SOLID_TRIGGER) continue;
         float distance = vlen(item.origin - self.handpos);
         if (distance < reach) { reach = distance; closest = item; }
     }
     if (!closest) return;
+    float weapon = closest.items;
     entity saved_other = other;
-    player.mvr_grabbing_pistol = TRUE;
+    player.mvr_grabbing_weapon = TRUE;
     self = closest;
     other = player;
     weapon_touch();
     self = player;
     other = saved_other;
-    player.mvr_grabbing_pistol = FALSE;
-    W_ChangeWeapon(IT_SHOTGUN, FALSE);
+    player.mvr_grabbing_weapon = FALSE;
+    if (player.items & weapon) W_ChangeWeapon(weapon, FALSE);
 }
 
 void() MVR_PistolFrame =
 {
     if (self.vrbits0 & MVR_TRACKED) {
-        if (!self.nail_main && !self.nail_mag && (self.vrbits0 & 8) && !(self.vrbits0 & 16)) MVR_GrabPistol();
+        if (!self.nail_main && !self.nail_mag && (self.vrbits0 & 8) && !(self.vrbits0 & 16)) MVR_GrabWeapon();
     }
     if (!(self.vrbits0 & MVR_TRACKED) || self.weapon != IT_SHOTGUN || self.nail_off) {
         MVR_ClearHand();

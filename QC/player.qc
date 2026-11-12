@@ -586,6 +586,8 @@ void() PlayerDie =
 {
 	MVR_ClearHand();
 	MVR_DropFlakShell();
+	MVR_StopMMML();
+	MVR_ReturnGrenade();
 	local	float	i;
 	
 	self.items = self.items - (self.items & IT_INVISIBILITY);

@@ -17,6 +17,53 @@
 */
 //=============================================================================================
 
+.vector v_viewangle;
+.float invoker_phase, invoker_start;
+
+// Frames 11..66 charge, 67..110 recover after firing.
+void() MVR_InvokerFrame =
+{
+    if (!self.invoker_phase) {
+        if (!self.button0 || self.attackpressed || self.ammo_cells < 1) return;
+        self.think = SUB_Null;
+        self.invoker_phase = 1;
+        self.invoker_start = time;
+        self.weaponframe = 11;
+        sound(self, CHAN_WEAPON, "invoker/magic21.wav", 1, ATTN_NORM);
+    }
+    float elapsed = floor((time - self.invoker_start) * 40);
+    if (self.invoker_phase == 1) {
+        if (self.button0) {
+            float frame = min(66, 11 + elapsed);
+            if (self.weaponframe < 66 && frame == 66)
+                sound(self, CHAN_WEAPON, "invoker/energy_charge.wav", 1, ATTN_NORM);
+            self.weaponframe = frame;
+            return;
+        }
+        if (self.weaponframe == 66 && self.ammo_cells >= 1) {
+            self.currentammo = self.ammo_cells = self.ammo_cells - 1;
+            self.effects |= EF_MUZZLEFLASH;
+            self.show_hostile = time + 1;
+            SuperDamageSound();
+            W_FireInvoker();
+            self.invoker_phase = 3;
+            self.invoker_start = time;
+        } else {
+            self.invoker_phase = 2;
+            self.invoker_start = time + (self.weaponframe - 11) * 0.025;
+        }
+    }
+    if (self.invoker_phase == 2) {
+        self.weaponframe = 11 + ceil((self.invoker_start - time) * 40);
+        if (self.weaponframe > 11) return;
+    } else {
+        self.weaponframe = 67 + floor((time - self.invoker_start) * 40);
+        if (self.weaponframe < 110) return;
+    }
+    self.invoker_phase = 0;
+    weaponanim_idle_invoker();
+}
+
 float() weaponanim_invoker = 
 {
 	if (self.attack_finished > time)
@@ -145,7 +192,12 @@ void() W_FireInvoker =
 
 	vector org = self.origin + self.view_ofs + (v_forward * 4);
 	
-	vector dir = v_forward;
+	if (self.vrbits0 & MVR_TRACKED) {
+        makevectors(self.handrot);
+        org = self.handpos + v_up * 6;
+        makevectors(self.v_viewangle);
+    }
+    vector dir = v_forward;
 	vector up = v_up;
 	vector right = v_right;
 

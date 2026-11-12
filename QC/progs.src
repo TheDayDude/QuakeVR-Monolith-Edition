@@ -25,6 +25,9 @@ item_health_armor.qc
 mvr_pistol.qc
 mvr_flak.qc
 mvr_nailgun.qc
+mvr_rebar.qc
+mvr_mmml.qc
+mvr_grenade.qc
 item_weap_ammo.qc
 item_powerups.qc
 item_keys_runes.qc

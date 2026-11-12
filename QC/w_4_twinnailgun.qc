@@ -111,7 +111,9 @@ void() weaponanim_twinnailgun_end =
 }
 //=============================================================================================
 
-void(float offs) W_FireTwinNailgun =
+void(float offs) W_FireTwinNailgun = { W_FireNailShot(offs, 9); }
+
+void(float offs, float damage) W_FireNailShot =
 {
 	sound (self, CHAN_WEAPON, "weapons/rocket1i.wav", 0.8, ATTN_NORM);	
 	sound (self, CHAN_AUTO, "nail/airpuff.wav", 0.3, ATTN_NORM);	
@@ -133,7 +135,7 @@ void(float offs) W_FireTwinNailgun =
 	entity spike = launch_projectile(org, dir * 1996, "nail");
 	spike.touch = twinnail_touch;
 	spike.alpha = 1;
-	spike.dmg = 9;
+	spike.dmg = damage;
 
 	spike.nextthink = time + 4; //air lifetime
 	spike.think = SUB_Remove;

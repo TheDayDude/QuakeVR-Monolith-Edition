@@ -32,6 +32,7 @@ void() W_Precache =
 	//=============================================================================================
 	
 	precache_model ("progs/v_wrench.mdl");						// 1 Melee
+	precache_model ("progs/v_mvrwrench.mdl");
 	precache_model ("progs/v_berserk.mdl");
 	precache_sound ("impact/fist_hit.wav");
 	precache_sound ("impact/fist_impact1.wav");
@@ -55,9 +56,17 @@ void() W_Precache =
 											// 2 Pistol
 	precache_model ("progs/bullet_casing.mdl");
 	precache_model ("progs/pistol_mag.mdl");
+	precache_model("progs/v_mvrgren.mdl");
+	precache_model("progs/mvr_canister.mdl");
+	precache_model("progs/v_mvrmmml.mdl");
+	precache_model("progs/mvr_mmmlrack.mdl");
 	precache_model ("progs/v_mvrflak.mdl");
 	precache_model ("progs/mvr_flakshell.mdl");
-	precache_model("progs/v_mvrnail.mdl");
+	precache_model("progs/v_spiker.mdl");
+    precache_model("progs/spikermag.mdl");
+    precache_model("progs/v_mvrnail.mdl");
+	precache_model("progs/v_mvrrebar.mdl");
+	precache_model("progs/mvr_rebarbundle.mdl");
 	precache_model("progs/mvr_nailmag.mdl");
 	precache_model ("progs/tracer_long_yellow.mdl");
 	precache_sound ("pistol/deadlock_reload.wav");
@@ -145,6 +154,7 @@ void() W_Precache =
 	//=============================================================================================
 											// 8 Invoker	
 	precache_model ("progs/v_invoker.mdl");
+	precache_model ("progs/v_mvrinvoker.mdl");
 	precache_model ("progs/proj_chain.mdl");
 	precache_sound ("invoker/invoker_firerail.wav");	
 	precache_sound ("invoker/magic07.wav");	
@@ -476,6 +486,11 @@ Called every frame so impulse events can be handled as well as possible
 */
 void() W_WeaponFrame =
 {
+	if (self.weapon == IT_LIGHTNING && (self.vrbits0 & MVR_TRACKED)) {
+		MVR_InvokerFrame();
+		self.attackpressed = self.button0;
+		return;
+	}
 	if (self.button0) {
 		if (self.attackpressed) self.attackhold = 1;
 		else self.attackhold = 0;
@@ -538,6 +553,9 @@ float(float weap, entity cl) W_CheckWeapon =
 
 	if (!(cl.items & weap)) return WEAPONSTAT_NOWEAPON;
 
+	if (weap == IT_GRENADE_LAUNCHER && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
+	if (weap == IT_ROCKET_LAUNCHER && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
+	if (weap == IT_SUPER_NAILGUN && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
 	if (weap == IT_NAILGUN && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
 	if (weap == IT_SUPER_SHOTGUN && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
 
@@ -630,6 +648,20 @@ float(float weap, float forcereset = FALSE) W_ChangeWeapon =
 	// in this case the end of the draw loop must call idlefunction
 	if (weap == IT_SUPER_SHOTGUN && (self.vrbits0 & MVR_TRACKED))
 		self.weaponmodel = "progs/v_mvrflak.mdl";
+	else if (weap == IT_GRENADE_LAUNCHER && (self.vrbits0 & MVR_TRACKED)) {
+		self.weaponmodel = "progs/v_mvrgren.mdl";
+		self.weaponframe = self.currentammo = self.gren_loaded;
+	}
+	else if (weap == IT_ROCKET_LAUNCHER && (self.vrbits0 & MVR_TRACKED)) {
+		self.weaponmodel = "progs/v_mvrmmml.mdl";
+		self.weaponframe = 8*self.mmml_loaded;
+	}
+	else if (weap == IT_LIGHTNING && (self.vrbits0 & MVR_TRACKED)) {
+		self.weaponmodel = "progs/v_mvrinvoker.mdl";
+		self.invoker_phase = 0;
+		weaponanim_idle_invoker();
+	}
+	else if (weap == IT_SUPER_NAILGUN && (self.vrbits0 & MVR_TRACKED)) self.weaponmodel = "progs/v_mvrrebar.mdl";
 	else if (weap == IT_NAILGUN && (self.vrbits0 & MVR_TRACKED)) self.weaponmodel = "progs/v_mvrnail.mdl";
 	else weapcl.drawfunction(); 
 	
@@ -823,6 +855,3 @@ void() SuperDamageSound =
 		sound (self, CHAN_POWERUP, "items/damage3.wav", 1, ATTN_NORM);
 	}
 }
-
-
-

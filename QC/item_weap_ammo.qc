@@ -61,7 +61,7 @@ weapon_touch
 void() weapon_touch =
 {
 	float	leave, nsw;
-	if (self.items == IT_SHOTGUN && (other.vrbits0 & MVR_TRACKED) && !other.mvr_grabbing_pistol) return;
+	if ((self.items == IT_SHOTGUN || self.items == IT_LIGHTNING) && (other.vrbits0 & MVR_TRACKED) && !other.mvr_grabbing_weapon) return;
 
 	if (!CheckValidTouch()) return;
     if (self.items == IT_NAILGUN && (other.vrbits0 & MVR_TRACKED)) {

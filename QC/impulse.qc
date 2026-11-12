@@ -289,7 +289,15 @@ void() ImpulseCommands =
 		case 100:
 			dev_invoke();
 			break;
-		case 101:
+		case 109:
+            if (!deathmatch && !coop && (self.vrbits0 & MVR_TRACKED)) {
+                entity rifle = spawn();
+                rifle.spiker = rifle.spiker_safe = TRUE;
+                makevectors(self.v_angle);
+                MVR_PutNailDown(rifle, self.origin + v_forward*24);
+            }
+            break;
+        case 101:
 			dev_reveal();
 			break;
 		case 102:
@@ -368,3 +376,4 @@ void() ImpulseCommands =
 	if (ret != WEAPONSTAT_CHANGELOCKED)
 		self.impulse = 0;
 }
+

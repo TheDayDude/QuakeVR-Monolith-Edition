@@ -1,6 +1,14 @@
 // A gun keeps its own magazine and charge state even while lying on the floor.
 
-.float nail_loaded, nail_ready, nail_rounds, nail_start, nail_pull, nail_full;
+.float spiker, spiker_safe, nail_loaded, nail_ready, nail_rounds, nail_start, nail_pull, nail_full;
+
+string(entity gun) MVR_NailModel =
+{
+    if (!gun.spiker) return "progs/v_mvrnail.mdl";
+    return "progs/v_spiker.mdl";
+}
+
+
 .float nail_eject, nail_trigger, nail_nextshot;
 .vector offhandrot, offmuzzlepos, offshotrot;
 .float mainhand_hotspot, weaponframe2, weapon2;
@@ -11,12 +19,18 @@ void(entity gun, vector pos) MVR_PutNailDown =
     gun.owner = world;
     gun.classname = "mvr_loose_nailgun";
     gun.nail_pull = gun.nail_full = 0;
-    gun.frame = gun.nail_loaded ? 0 : 6;
+    gun.frame = gun.nail_loaded ? 0 : (gun.spiker ? 1 : 6);
     gun.movetype = MOVETYPE_TOSS;
     gun.solid = SOLID_TRIGGER;
-    setmodel(gun, "progs/v_mvrnail.mdl");
+    setmodel(gun, MVR_NailModel(gun));
     setsize(gun, '-4 -4 -6', '4 4 5');
     setorigin(gun, pos);
+}
+
+void() weapon_spiker =
+{
+    self.spiker = self.spiker_safe = TRUE;
+    MVR_PutNailDown(self, self.origin);
 }
 
 void() MVR_SplitNailguns =
@@ -111,9 +125,16 @@ void(float off) MVR_NailHand =
     vector delta = support-pos;
     float available = off ? self.weapon == IT_NO_WEAPON : !self.nail_off;
     available = available && !(self.vrbits0 & (off ? 262144 : 131072));
-    if (eject && !gun.nail_eject && gun.nail_loaded) {
+    if (gun.spiker && eject && !gun.nail_eject) {
+        gun.spiker_safe = !gun.spiker_safe;
+        if (gun.spiker_safe) centerprint(self, "Spiker safety on");
+        else centerprint(self, "Spiker safety off");
+    }
+    float magselect = gun.spiker && available && helper && !gun.nail_trigger &&
+                      vlen(delta-v_forward*8+v_up*2) < 4;
+    if ((magselect || (!gun.spiker && eject && !gun.nail_eject)) && gun.nail_loaded) {
         entity spent = spawn();
-        setmodel(spent,"progs/mvr_nailmag.mdl");
+        setmodel(spent,gun.spiker ? "progs/spikermag.mdl" : "progs/mvr_nailmag.mdl");
         setorigin(spent,pos+v_forward*13-v_up*4);
         spent.movetype = MOVETYPE_TOSS;
         spent.think = SUB_Remove;
@@ -126,7 +147,7 @@ void(float off) MVR_NailHand =
     if (available && !gun.nail_loaded) {
         if (self.nail_mag && self.nail_mag.owner == gun) {
             setorigin(self.nail_mag,support);
-            if (vlen(delta-v_forward*13+v_up*3) < 5) {
+            if (vlen(delta-v_forward*(gun.spiker ? 8 : 13)+v_up*(gun.spiker ? 2 : 3)) < 5) {
                 gun.nail_loaded = TRUE;
                 gun.nail_rounds = self.nail_mag.nail_rounds;
                 remove(self.nail_mag);
@@ -142,9 +163,12 @@ void(float off) MVR_NailHand =
             self.nail_mag.owner = gun;
             self.nail_mag.nail_rounds = min(30,self.ammo_nails);
             self.ammo_nails -= self.nail_mag.nail_rounds;
-            setmodel(self.nail_mag,"progs/mvr_nailmag.mdl");
+            setmodel(self.nail_mag,gun.spiker ? "progs/spikermag.mdl" : "progs/mvr_nailmag.mdl");
             setorigin(self.nail_mag,support);
         }
+    } else if (gun.spiker) {
+        if (available && !gun.spiker_safe && helper && !gun.nail_trigger && !magselect)
+            gun.nail_ready = gun.nail_loaded;
     } else if (available && gun.nail_loaded) {
         float along = delta*v_forward;
         if (helper && !gun.nail_trigger && vlen(delta-v_forward*10-v_up*6) < 5) {
@@ -163,14 +187,19 @@ void(float off) MVR_NailHand =
     } else gun.nail_pull = 0;
     gun.nail_trigger = helper;
     gun.frame = (gun.nail_loaded ? 0 : 6) + floor(progress*5+.5);
+    if (gun.spiker) {
+        gun.frame = gun.nail_loaded ? 0 : 1;
+        if (off) self.weaponmodel2 = MVR_NailModel(gun);
+        else self.weaponmodel = MVR_NailModel(gun);
+    }
     if (off) self.weaponframe2 = gun.frame;
     else { self.weaponframe = gun.frame; self.currentammo = gun.nail_rounds; }
-    if (fire && gun.nail_ready && gun.nail_rounds && !gun.nail_pull && time >= gun.nail_nextshot) {
-        gun.nail_nextshot = time + .08;
+    if (fire && !gun.spiker_safe && gun.nail_ready && gun.nail_rounds && !gun.nail_pull && time >= gun.nail_nextshot) {
+        gun.nail_nextshot = time + (gun.spiker ? .20 : .08);
         gun.nail_rounds--;
         if (!gun.nail_rounds) gun.nail_ready = FALSE;
         SuperDamageSound();
-        W_FireTwinNailgun(off ? -1 : 0);
+        W_FireNailShot(off ? -1 : 0, gun.spiker ? 24 : 9);
         self.show_hostile = time+1;
     }
 }
@@ -194,5 +223,3 @@ void() MVR_NailFrame =
     MVR_NailHand(FALSE);
     MVR_NailHand(TRUE);
 }
-
-

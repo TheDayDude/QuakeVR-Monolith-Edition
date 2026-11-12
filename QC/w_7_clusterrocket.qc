@@ -22,6 +22,19 @@ float() weaponanim_boxrocket =
 	if (self.attack_finished > time)
 		return FALSE;
 
+	if (self.vrbits0 & MVR_TRACKED) {
+		if (!self.mmml_loaded || self.mmml_wait_release) return FALSE;
+		self.mmml_loaded = self.currentammo = 0;
+		self.mmml_remaining = 8;
+		self.mmml_next = time + .1;
+		self.attack_finished = time + .7;
+		self.customflags |= CFL_WEAPONLOCK;
+		SUB_CallAsSelf(player_rockatt1, self.animcontroller);
+		SuperDamageSound();
+		MVR_MMMLMissile();
+		return TRUE;
+	}
+
 	if (W_CheckWeapon(self.weapon, self) != WEAPONSTAT_AVAILABLE)
 	{
 		self.customflags &~= CFL_WEAPONLOCK;
@@ -105,10 +118,8 @@ void(vector ofs, float ammoUsage) boxrocket_launch =
 	W_FireSpiralRocket(ofs);
 }
 
-void(vector ofs) W_FireSpiralRocket =
+void() MMML_FireSound =
 {
-	local	vector dir, org;
-
 	sound (self, CHAN_WEAPON, "weapons/sgun1.wav", 0.8, ATTN_NORM);
 	
 	local float r;
@@ -118,8 +129,13 @@ void(vector ofs) W_FireSpiralRocket =
 	else if (r<0.5)	sound (self, CHAN_AUTO, "mmml/fire2.wav", 1, ATTN_NORM);
 	else if (r<0.75)sound (self, CHAN_AUTO, "mmml/fire3.wav", 1, ATTN_NORM);
 	else 		sound (self, CHAN_AUTO, "mmml/fire4.wav", 1, ATTN_NORM);
-	
-	
+};
+
+void(vector ofs) W_FireSpiralRocket =
+{
+	local	vector dir, org;
+
+	MMML_FireSound();
 	makevectors (self.v_angle);
 	dir = aim(self, 1000);
 

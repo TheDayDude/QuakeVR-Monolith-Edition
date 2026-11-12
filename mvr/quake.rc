@@ -54,6 +54,39 @@ alias mvr_mag_release ""
 bind BBUTTON mvr_mag_release
 bind ABUTTON +jump
 bind LTHUMB +speed
+// Pipe wrench: lower grip at the origin, helping hand above it, jaw vertex 180.
+vr_wofs_id_30 progs/v_mvrinvoker.mdl
+vr_wofs_scale_30 1
+vr_wofs_x_30 0
+vr_wofs_y_30 0
+vr_wofs_z_30 0
+vr_wofs_fgr_manual_30 1
+vr_wofs_id_31 progs/v_mvrwrench.mdl
+vr_wofs_scale_31 1
+vr_wofs_x_31 -1
+vr_wofs_y_31 0
+vr_wofs_z_31 -3
+vr_wofs_muzzle_av_31 180
+vr_wofs_2h_mode_31 1
+vr_wofs_hs1_type_31 3
+vr_wofs_hs1_x_31 2.4
+vr_wofs_hs1_y_31 0
+vr_wofs_hs1_z_31 6
+vr_wofs_w_mass_31 3.1
+vr_wofs_w_com_31 23
+vr_wofs_w_len_31 62
+vr_wofs_id_32 progs/v_mvrmmml.mdl
+vr_wofs_scale_32 1
+vr_wofs_hand_av_32 172
+vr_wofs_2h_hand_av_32 258
+vr_wofs_2h_dispmd_32 1
+vr_wofs_2h_mode_32 1
+vr_wofs_id_29 progs/v_mvrgren.mdl
+vr_wofs_scale_29 1
+vr_wofs_hand_av_29 1
+vr_wofs_2h_hand_av_29 1026
+vr_wofs_2h_dispmd_29 1
+vr_wofs_2h_mode_29 1
 stuffcmds
 
 sv_protocol 999

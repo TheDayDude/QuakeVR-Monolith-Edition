@@ -28,6 +28,8 @@ float() weaponanim_wrench =
 	if (has_berserk(self))
 		return weaponanim_berserk();
 
+	if (self.vrbits0 & MVR_TRACKED) return FALSE;
+
 	if (self.attack_finished > time)
 		return FALSE;
 
@@ -81,7 +83,13 @@ void() weaponanim_draw_wrench =
 		return;
 	}
 
-	sound (self, CHAN_AUTO, "misc/draw1.wav", 0.1, ATTN_NORM);
+	if (self.vrbits0 & MVR_TRACKED) {
+        self.weaponmodel = "progs/v_mvrwrench.mdl";
+        self.weaponframe = 0;
+        return;
+    }
+
+    sound (self, CHAN_AUTO, "misc/draw1.wav", 0.1, ATTN_NORM);
 	
 	self.weaponframe = 1;
 	
@@ -256,10 +264,10 @@ void(entity hitent, vector org, vector dir) hitwrench =
 		}
 		//johnfitz
 
-		if (trace_ent.flags & FL_MONSTER)
+		if (hitent.flags & FL_MONSTER)
 		{
-			if (trace_ent.type == "zombie")
-				zombie_knockdown(trace_ent);
+			if (hitent.type == "zombie")
+				zombie_knockdown(hitent);
 			
 			sound_wrench_hit_enemy(1);
 		}
@@ -272,17 +280,17 @@ void(entity hitent, vector org, vector dir) hitwrench =
 		// do knockback with a quad
 		if (has_quad(self))
 		{
-			if ((trace_ent.movetype == MOVETYPE_STEP || trace_ent.movetype == MOVETYPE_WALK) && 
+			if ((hitent.movetype == MOVETYPE_STEP || hitent.movetype == MOVETYPE_WALK) && 
 				// don't swat bosses or other non-standard-sized enemies around
-				trace_ent.maxs_x <= 32 && trace_ent.health > 0 && trace_ent.type != "boss")
+				hitent.maxs_x <= 32 && hitent.health > 0 && hitent.type != "boss")
 			{
 				toss = v_forward;
 				toss_z = 0;
 				toss = normalize(toss) * 800;
 				toss_z = 150;
-				trace_ent.origin_z = trace_ent.origin_z + 1;
-				trace_ent.velocity = toss;
-				trace_ent.flags = not(trace_ent.flags, FL_ONGROUND);
+				hitent.origin_z = hitent.origin_z + 1;
+				hitent.velocity = toss;
+				hitent.flags = not(hitent.flags, FL_ONGROUND);
 			}
 		}
 	}
@@ -294,4 +302,106 @@ void(entity hitent, vector org, vector dir) hitwrench =
 
 		gunshot(org);
 	}
+}
+.vector wrench_last_grip, wrench_last_tip, wrench_last_origin;
+.float vryaw, wrench_last_yaw, wrench_sample, wrench_started, wrench_moving;
+.float wrench_swinging;
+
+void(vector grip, vector tip, vector motion) MVR_WrenchContact =
+{
+    traceline2(grip, tip, self, FALSE);
+    if (trace_fraction == 1 || trace_startsolid) return;
+    entity target = trace_ent;
+    vector contact = trace_endpos;
+    // Each player's swing owns its contacts, including a single contact for the world.
+    entity mark = world;
+    while ((mark = find(mark, classname, "mvr_wrench_contact"))) {
+        if (mark.owner == self && mark.enemy == target && mark.ltime == self.wrench_started)
+            return;
+    }
+    mark = spawn();
+    mark.classname = "mvr_wrench_contact";
+    mark.owner = self;
+    mark.enemy = target;
+    mark.ltime = self.wrench_started;
+    mark.think = SUB_Remove;
+    mark.nextthink = time + 0.8;
+
+    self.show_hostile = time + 1;
+    makevectors(vectoangles(motion));
+    hitwrench(target, contact, motion * 20);
+}
+
+void() MVR_WrenchFrame =
+{
+    if (self.weapon != IT_AXE || has_berserk(self) || !(self.vrbits0 & MVR_TRACKED)) {
+        if (self.weapon == IT_AXE && self.weaponmodel == "progs/v_mvrwrench.mdl") {
+            self.weaponmodel = "progs/v_wrench.mdl";
+            if (has_berserk(self)) self.weaponmodel = "progs/v_berserk.mdl";
+            weaponanim_draw_wrench();
+        }
+        self.wrench_sample = self.wrench_swinging = 0;
+        return;
+    }
+
+    // Tracking can arrive after the initial weapon selection at spawn.
+    if (self.weaponmodel != "progs/v_mvrwrench.mdl") {
+        self.weaponmodel = "progs/v_mvrwrench.mdl";
+        self.weaponframe = 0;
+        self.think = SUB_Null;
+        self.wrench_sample = 0;
+    }
+
+    vector tip = self.muzzlepos; // anchor on the rendered jaw, including its weight spring
+    vector grip = self.handpos;
+    vector previous_tip = self.wrench_last_tip;
+    vector previous_grip = self.wrench_last_grip;
+    vector step = tip - previous_tip;
+    vector body_step = self.origin - self.wrench_last_origin;
+    float elapsed = time - self.wrench_sample;
+    float reset = !self.wrench_sample || elapsed > 0.12 ||
+        vlen(step) > 48 || vlen(body_step) > 32 || fabs(self.vryaw - self.wrench_last_yaw) > 15;
+    if (!reset && tip == previous_tip && grip == previous_grip) {
+        self.wrench_sample = time;
+        self.wrench_last_origin = self.origin;
+        if (time - self.wrench_moving > 0.09) self.wrench_swinging = FALSE;
+        return;
+    }
+    self.wrench_sample = time;
+    self.wrench_last_tip = tip;
+    self.wrench_last_grip = grip;
+    self.wrench_last_origin = self.origin;
+    self.wrench_last_yaw = self.vryaw;
+    if (reset || elapsed <= 0 || vlen(tip - grip) < 4) {
+        self.wrench_swinging = FALSE;
+        return;
+    }
+
+    vector swing = step - body_step;
+    float speed = vlen(swing) / elapsed;
+    if (speed < 32) {
+        if (time - self.wrench_moving > 0.09) self.wrench_swinging = FALSE;
+        return;
+    }
+    self.wrench_moving = time;
+    if (!self.wrench_swinging) {
+        if (speed < 72 || time < self.attack_finished) return;
+        self.wrench_swinging = TRUE;
+        self.wrench_started = time;
+        self.attack_finished = time + 0.8;
+        sound(self, CHAN_OTHER, "impact/wrench_swing.wav", 1, ATTN_NORM);
+        SuperDamageSound();
+        SUB_CallAsSelf(player_wrench1, self.animcontroller);
+    }
+    if (time - self.wrench_started > 0.55) return;
+
+    // Sweep the length of the wrench through successive poses, stopping each
+    // ray at its first obstruction. A later part of the arc may reach another foe.
+    float steps = max(1, ceil(max(vlen(step), vlen(grip - previous_grip)) / 3));
+    vector direction = normalize(swing);
+    for (float i = 1; i <= steps; i++) {
+        float t = i / steps;
+        MVR_WrenchContact(previous_grip + (grip - previous_grip) * t,
+            previous_tip + step * t, direction);
+    }
 }

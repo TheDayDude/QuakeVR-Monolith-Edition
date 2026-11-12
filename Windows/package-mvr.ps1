@@ -33,7 +33,7 @@ Copy-Item "$devkit/maps/b_*.bsp","$hub/mvr_start.bsp" "$Destination/mvr/maps"
 if (Test-Path "$hub/mvr_start.lit") {
     Copy-Item "$hub/mvr_start.lit" "$Destination/mvr/maps"
 }
-Copy-Item "$repo/mvr/progs/v_mvrflak.mdl","$repo/mvr/progs/mvr_flakshell.mdl","$repo/mvr/progs/v_mvrnail.mdl","$repo/mvr/progs/mvr_nailmag.mdl" "$Destination/mvr/progs"
+Copy-Item "$repo/mvr/progs/v_mvrinvoker.mdl","$repo/mvr/progs/v_mvrwrench.mdl","$repo/mvr/progs/v_mvrgren.mdl","$repo/mvr/progs/mvr_canister.mdl","$repo/mvr/progs/v_mvrmmml.mdl","$repo/mvr/progs/mvr_mmmlrack.mdl","$repo/mvr/progs/v_mvrflak.mdl","$repo/mvr/progs/mvr_flakshell.mdl","$repo/mvr/progs/v_mvrnail.mdl","$repo/mvr/progs/mvr_nailmag.mdl","$repo/mvr/progs/v_mvrrebar.mdl","$repo/mvr/progs/mvr_rebarbundle.mdl" "$Destination/mvr/progs"
 python "$repo/Misc/rover_body.py" "$Content/progs/player_qbj.mdl" "$Destination/mvr/progs/rover_body.mdl"
 if ($LASTEXITCODE) { throw "Rover model generation failed" }
 

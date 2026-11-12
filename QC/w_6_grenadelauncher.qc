@@ -22,6 +22,26 @@ float() weaponanim_qbj3grenade =
 	if (self.attack_finished > time)
 		return FALSE;
 
+    if (self.vrbits0 & MVR_TRACKED) {
+        if (!self.gren_loaded || self.gren_wait_release) return FALSE;
+        self.gren_loaded--;
+        self.currentammo = self.weaponframe = self.gren_loaded;
+        self.attack_finished = time + .6;
+        self.effects |= EF_MUZZLEFLASH;
+        SUB_CallAsSelf(player_rockatt1, self.animcontroller);
+        W_FireQBJ3Grenade();
+        entity spent = spawn();
+        setmodel(spent,"progs/mvr_canister.mdl");
+        setorigin(spent,MVR_GrenadeSocket());
+        spent.angles = self.handrot;
+        spent.movetype = MOVETYPE_BOUNCE;
+        spent.velocity = v_up*90 + v_right*35;
+        spent.avelocity = '80 0 140';
+        spent.think = SUB_Remove;
+        spent.nextthink = time+3;
+        return TRUE;
+    }
+
 	if (W_CheckWeapon(self.weapon, self) != WEAPONSTAT_AVAILABLE)
 	{
 		W_ChangeWeapon(W_BestWeapon(), FALSE);
@@ -94,7 +114,12 @@ void() W_FireQBJ3Grenade =
 		gvel_z = base;
 	}
 	
-	g = launch_qbj3grenade(self.origin, gvel);
+	if (self.vrbits0 & MVR_TRACKED) {
+        makevectors(self.handrot);
+        traceline(self.handpos,self.handpos + 29*v_forward + 8*v_up,FALSE,self);
+        makevectors(self.shotrot);
+        g = launch_qbj3grenade(trace_endpos,v_forward*600 + v_up*200);
+    } else g = launch_qbj3grenade(self.origin, gvel);
 	g.touch = GrenadeTouch;
 	g.th_die = GrenadeExplode;
 }
