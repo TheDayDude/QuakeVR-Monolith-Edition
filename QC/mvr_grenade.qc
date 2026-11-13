@@ -22,7 +22,7 @@ void() MVR_GrenadeFrame =
         return;
     }
     if (!self.button0) self.gren_wait_release = 0;
-    if (self.nail_off || (self.vrbits0 & 131072)) MVR_ReturnGrenade();
+    if (self.nail_off || self.mvr_offweapon || (self.vrbits0 & 131072)) MVR_ReturnGrenade();
     else if (self.gren_held) {
         setorigin(self.gren_held,self.offhandpos);
         self.gren_held.angles = self.offhandrot;

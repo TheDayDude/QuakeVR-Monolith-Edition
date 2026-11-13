@@ -60,6 +60,7 @@ void() SetChangeParms =
 	else
 		self.health = max(self.health, 50);
 	
+	MVR_SaveHolsterParms();
 	parm1 = self.items;
 	parm2 = self.health;
 	parm3 = self.armorvalue;
@@ -85,6 +86,7 @@ void() SetChangeParms =
 
 void() SetNewParms =
 {
+	MVR_NewHolsterParms();
 	parm11 = 0;
 	parm1 = IT_SHOTGUN | IT_AXE;
 	parm2 = 100;
@@ -117,6 +119,7 @@ void() SetNewParms =
 // shells and nails are kept over on respawn
 void() SetCoopParms =
 {
+	MVR_NewHolsterParms();
 	parm11 = 0;
 	parm1 = self.items & IT_WEAPONS;
 	parm2 = 100;
@@ -165,6 +168,7 @@ void() DecodeLevelParms =
 	self.mmml_loaded = floor(parm11/8192) & 1;
 	self.rebar_live = floor(parm11/4096) & 1;
 	
+	MVR_RestoreHolsterParms();
 	//self.weapon = parm8;
 	W_ChangeWeapon(parm8, FALSE);
 
@@ -667,6 +671,7 @@ void() PutClientInServer =
 	MVR_ReturnRebar();
 	self.rebar_live = self.rebar_rounds = self.rebar_pull = 0;
 	MVR_ResetNails();
+	MVR_ResetHolsters();
 	self.pistol_ammo_count = 10;
 	self.enemy = world;
 
@@ -1932,6 +1937,7 @@ void() PlayerPostThink =
 		ImpulseCommands();
 
 	// do weapon stuff
+	MVR_HolsterFrame();
 	MVR_NailFrame();
 	MVR_PistolFrame();
 	MVR_WrenchFrame();
@@ -2115,6 +2121,7 @@ void() ClientDisconnect =
 	MVR_StopMMML();
 	MVR_ReturnGrenade();
 	MVR_ResetNails();
+	MVR_ResetHolsters();
 	if (gameover)
 		return;
 	// if the level end trigger has been activated, just return

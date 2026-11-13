@@ -66,7 +66,7 @@ void() MVR_MMMLFrame =
         }
         return;
     }
-    if (self.nail_off || (self.vrbits0 & 131072)) MVR_ReturnMMMLRack();
+    if (self.nail_off || self.mvr_offweapon || (self.vrbits0 & 131072)) MVR_ReturnMMMLRack();
     else if (self.mmml_held) {
         setorigin(self.mmml_held,self.offhandpos);
         self.mmml_held.angles = self.offhandrot;

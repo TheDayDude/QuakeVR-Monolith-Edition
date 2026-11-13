@@ -30,7 +30,7 @@ void() MVR_RebarFrame =
         MVR_ReturnRebar();
         return;
     }
-    if (self.nail_off || (self.vrbits0 & 131072)) {
+    if (self.nail_off || self.mvr_offweapon || (self.vrbits0 & 131072)) {
         self.rebar_pull = 0;
         MVR_ReturnRebar();
         MVR_RebarPose(0);

@@ -48,9 +48,9 @@ void() MVR_GrabWeapon =
 void() MVR_PistolFrame =
 {
     if (self.vrbits0 & MVR_TRACKED) {
-        if (!self.nail_main && !self.nail_mag && (self.vrbits0 & 8) && !(self.vrbits0 & 16)) MVR_GrabWeapon();
+        if (!(self.mvr_holster_used & 2) && !self.nail_main && !self.nail_mag && (self.vrbits0 & 8) && !(self.vrbits0 & 16)) MVR_GrabWeapon();
     }
-    if (!(self.vrbits0 & MVR_TRACKED) || self.weapon != IT_SHOTGUN || self.nail_off) {
+    if (!(self.vrbits0 & MVR_TRACKED) || self.weapon != IT_SHOTGUN || self.nail_off || self.mvr_offweapon) {
         MVR_ClearHand();
         self.mvr_eject_down = !!(self.vrbits0 & 1048576);
         self.mvr_slide_down = self.button3;

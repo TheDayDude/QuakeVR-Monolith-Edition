@@ -545,6 +545,7 @@ float() W_BestWeapon =
 float(float weap, entity cl) W_CheckWeapon =
 {
 	weaponclass_t weapcl = weaponsclass[getWeapon(weap)];
+	if ((cl.vrbits0 & MVR_TRACKED) && MVR_WeaponStoredFor(cl, weap)) return WEAPONSTAT_NOWEAPON;
 
 	//if (has_gorgon(cl) && weap == IT_AXE) return WEAPONSTAT_AVAILABLE;
 	if (has_berserk(cl) && weap == IT_AXE) return WEAPONSTAT_AVAILABLE;
@@ -552,6 +553,8 @@ float(float weap, entity cl) W_CheckWeapon =
 	if (weap == IT_NO_WEAPON) return WEAPONSTAT_AVAILABLE;
 
 	if (!(cl.items & weap)) return WEAPONSTAT_NOWEAPON;
+	// Drawing a carried weapon is allowed even when its ammunition is exhausted.
+	if (cl.mvr_drawing) return WEAPONSTAT_AVAILABLE;
 
 	if (weap == IT_GRENADE_LAUNCHER && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;
 	if (weap == IT_ROCKET_LAUNCHER && (cl.vrbits0 & MVR_TRACKED)) return WEAPONSTAT_AVAILABLE;

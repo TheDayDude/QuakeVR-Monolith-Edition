@@ -17,6 +17,7 @@ string(entity gun) MVR_NailModel =
 void(entity gun, vector pos) MVR_PutNailDown =
 {
     gun.owner = world;
+    gun.weapon = IT_NAILGUN;
     gun.classname = "mvr_loose_nailgun";
     gun.nail_pull = gun.nail_full = 0;
     gun.frame = gun.nail_loaded ? 0 : (gun.spiker ? 1 : 6);
@@ -82,8 +83,8 @@ void(float off) MVR_NailHand =
     float fire = off ? self.button3 : self.button0;
     float helper = off ? self.button0 : self.button3;
     float eject = !!(self.vrbits0 & (off ? 524288 : 1048576));
-    if ((self.vrbits0 & grip) && !(self.vrbits0 & (grip*2)) && !(self.vrbits0 & busy) && !self.nail_mag) {
-        if (gun && (off || self.weapon == IT_NAILGUN)) {
+    if (!(self.mvr_holster_used & (off ? 1 : 2)) && !(self.vrbits0 & busy) && !self.nail_mag) {
+        if (gun && (off || self.weapon == IT_NAILGUN) && !(self.vrbits0 & grip) && (self.vrbits0 & (grip*2))) {
             MVR_PutNailDown(gun,pos);
             if (off) {
                 self.nail_off = world;
@@ -92,22 +93,26 @@ void(float off) MVR_NailHand =
             } else {
                 self.nail_main = world;
                 self.items &~= IT_NAILGUN;
-                W_ChangeWeapon(self.nail_off ? IT_NO_WEAPON : W_BestWeapon(),FALSE);
+                W_ChangeWeapon(IT_NO_WEAPON,FALSE);
             }
             return;
         }
-        if (!gun) {
+        if (!gun && (self.vrbits0 & grip) && !(self.vrbits0 & (grip*2))) {
             gun = MVR_FindNailgun(pos);
             if (!gun) return;
             if (!off) {
+                if (self.weapon != IT_NO_WEAPON) return;
                 self.items |= IT_NAILGUN;
-                if (W_ChangeWeapon(IT_NAILGUN,FALSE) != WEAPONSTAT_AVAILABLE) {
+                self.mvr_drawing = TRUE;
+                float changed = W_ChangeWeapon(IT_NAILGUN,FALSE);
+                self.mvr_drawing = FALSE;
+                if (changed != WEAPONSTAT_AVAILABLE) {
                     self.items &~= IT_NAILGUN;
                     return;
                 }
                 self.nail_main = gun;
             } else {
-                if (!self.nail_main) W_ChangeWeapon(IT_NO_WEAPON,FALSE);
+                if (self.mvr_offweapon) return;
                 self.nail_off = gun;
                 self.weapon2 = IT_NAILGUN;
                 self.weaponmodel2 = "progs/v_mvrnail.mdl";
@@ -123,7 +128,7 @@ void(float off) MVR_NailHand =
     if (!gun || (!off && self.weapon != IT_NAILGUN)) return;
     makevectors(rot);
     vector delta = support-pos;
-    float available = off ? self.weapon == IT_NO_WEAPON : !self.nail_off;
+    float available = off ? self.weapon == IT_NO_WEAPON : !self.nail_off && !self.mvr_offweapon;
     available = available && !(self.vrbits0 & (off ? 262144 : 131072));
     if (gun.spiker && eject && !gun.nail_eject) {
         gun.spiker_safe = !gun.spiker_safe;
@@ -188,12 +193,10 @@ void(float off) MVR_NailHand =
     gun.nail_trigger = helper;
     gun.frame = (gun.nail_loaded ? 0 : 6) + floor(progress*5+.5);
     if (gun.spiker) {
-        gun.frame = gun.nail_loaded ? 0 : 1;
+        gun.frame = gun.nail_loaded ? (gun.spiker_safe ? 0 : 2) : 1;
         if (off) self.weaponmodel2 = MVR_NailModel(gun);
         else self.weaponmodel = MVR_NailModel(gun);
     }
-    if (off) self.weaponframe2 = gun.frame;
-    else { self.weaponframe = gun.frame; self.currentammo = gun.nail_rounds; }
     if (fire && !gun.spiker_safe && gun.nail_ready && gun.nail_rounds && !gun.nail_pull && time >= gun.nail_nextshot) {
         gun.nail_nextshot = time + (gun.spiker ? .20 : .08);
         gun.nail_rounds--;
@@ -202,15 +205,23 @@ void(float off) MVR_NailHand =
         W_FireNailShot(off ? -1 : 0, gun.spiker ? 24 : 9);
         self.show_hostile = time+1;
     }
+    if (gun.spiker && gun.nail_loaded && !gun.spiker_safe && gun.nail_nextshot > time) {
+        // The Blender firing pose leads into bolt travel, feed and return.
+        float phase = floor(max(0, .20 - (gun.nail_nextshot-time)) * 25);
+        gun.frame = phase == 0 ? 7 : min(6, 2 + phase);
+    }
+    if (off) self.weaponframe2 = gun.frame;
+    else { self.weaponframe = gun.frame; self.currentammo = gun.nail_rounds; }
 }
 
 void() MVR_NailFrame =
 {
     if (!(self.vrbits0 & MVR_TRACKED)) return;
-    if ((self.items & IT_NAILGUN) && !self.nail_main) {
+    if ((self.items & IT_NAILGUN) && !self.nail_main && !MVR_WeaponStored(IT_NAILGUN)) {
         // Inventory restored from level parameters or a pre-conversion save.
         self.nail_main = spawn();
         self.nail_main.owner = self;
+        self.nail_main.weapon = IT_NAILGUN;
         self.nail_main.classname = "mvr_held_nailgun";
         if (self.weapon == IT_NAILGUN) W_ChangeWeapon(IT_NAILGUN,TRUE);
     }

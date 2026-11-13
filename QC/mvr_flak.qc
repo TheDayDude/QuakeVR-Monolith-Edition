@@ -40,7 +40,7 @@ void() MVR_FlakFrame =
 {
     float pressed = self.button3 && !self.flak_trigger;
     self.flak_trigger = self.button3;
-    if (!(self.vrbits0 & MVR_TRACKED) || self.weapon != IT_SUPER_SHOTGUN || self.health <= 0 || self.nail_off) {
+    if (!(self.vrbits0 & MVR_TRACKED) || self.weapon != IT_SUPER_SHOTGUN || self.health <= 0 || self.nail_off || self.mvr_offweapon) {
         MVR_DropFlakShell();
         self.flak_stroke = self.flak_open = 0;
         return;
