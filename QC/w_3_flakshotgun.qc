@@ -225,7 +225,7 @@ void() FlakTouch =
 	if (other.takedamage)
 	{
 
-		T_Damage(other, self, self.trueowner, 5);
+		T_Damage(other, self, self.trueowner, 5 * MVR_HeadshotMultiplier(self.trueowner, other, self.origin));
 		
 		//dprint3("Dealing damage, health ", ftos(other.health), "\n");
 		SpawnBlood(self.origin, self.velocity, 50);

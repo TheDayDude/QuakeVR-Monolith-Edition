@@ -202,6 +202,9 @@ void		end_sys_globals;		// flag for structure dumping
 
 //================================================
 void		end_sys_fields;			// flag for structure dumping
+const float MVR_MACE = 1, MVR_GREATSWORD = 2;
+const float WID_MACE = 101, WID_GREATSWORD = 102;
+.float melee_kind, melee_owned, melee_dropped, melee_hit;
 //================================================
 
 /*

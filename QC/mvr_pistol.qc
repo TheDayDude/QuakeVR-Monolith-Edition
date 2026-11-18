@@ -48,6 +48,7 @@ void() MVR_GrabWeapon =
 void() MVR_PistolFrame =
 {
     if (self.vrbits0 & MVR_TRACKED) {
+        if (self.weapon == IT_SHOTGUN) self.weaponmodel = "progs/v_mvrpistol.mdl";
         if (!(self.mvr_holster_used & 2) && !self.nail_main && !self.nail_mag && (self.vrbits0 & 8) && !(self.vrbits0 & 16)) MVR_GrabWeapon();
     }
     if (!(self.vrbits0 & MVR_TRACKED) || self.weapon != IT_SHOTGUN || self.nail_off || self.mvr_offweapon) {
@@ -69,7 +70,7 @@ void() MVR_PistolFrame =
     float along = delta * v_forward;
     if (self.mvr_mag) {
         setorigin(self.mvr_mag, self.offhandpos);
-        if (vlen(delta + v_up * 3) < 7) {
+        if (vlen(delta + v_up * (3*0.38)) < 7) {
             MVR_ClearHand();
             self.mvr_pistol_phase = MVR_NEEDS_SLIDE;
             sound(self, CHAN_ITEM, "pistol/deadlock_reload.wav", 0.7, ATTN_NORM);
@@ -83,13 +84,13 @@ void() MVR_PistolFrame =
         setorigin(self.mvr_mag, self.offhandpos);
     } else if (self.mvr_pistol_phase == MVR_NEEDS_SLIDE) {
         if (self.vrbits0 & (2 | 131072)) self.mvr_slide_grab = FALSE;
-        else if (self.button3 && !self.mvr_slide_down && vlen(delta - v_up * 4) < 6) {
+        else if (self.button3 && !self.mvr_slide_down && vlen(delta - v_up * (4*0.38)) < 6) {
             self.mvr_slide_grab = TRUE;
             self.mvr_slide_back = FALSE;
             self.mvr_slide_start = along;
         }
         if (self.mvr_slide_grab) {
-            if (self.mvr_slide_start - along >= 3) self.mvr_slide_back = TRUE;
+            if (self.mvr_slide_start - along >= 3*0.38) self.mvr_slide_back = TRUE;
             if (!self.button3) {
                 if (self.mvr_slide_back) {
                     self.mvr_pistol_phase = 0;

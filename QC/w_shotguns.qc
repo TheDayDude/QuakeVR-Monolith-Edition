@@ -139,6 +139,7 @@ vector(float damage, vector dir) BulletImpact =
 {
 	vector vel, org;
 	
+	damage *= MVR_HeadshotMultiplier(self, trace_ent, trace_endpos);
 	vel = normalize(dir + v_up*crandom() + v_right*crandom());
 	vel = vel + 2*trace_plane_normal;
 
@@ -178,7 +179,7 @@ FireBullets
 Used by shotgun, super shotgun, and enemy soldier firing
 ================
 */
-void(float shotcount, vector dir, vector spread, float tracer) FireBullets =
+void(float shotcount, vector dir, vector spread, float tracer, vector muzzle) FireBulletsFrom =
 {
 	vector src, direction;
 	entity ig;
@@ -193,6 +194,7 @@ void(float shotcount, vector dir, vector spread, float tracer) FireBullets =
 	{
 		src = self.origin + v_forward*10;
 		src_z = self.absmin_z + self.size_z * 0.7;
+		if (muzzle) src = muzzle;
 		direction = SpreadVector(dir, spread);
 		
 		if (trace_debug) dprint("* firing a bullet *\n");
@@ -249,6 +251,11 @@ void(float shotcount, vector dir, vector spread, float tracer) FireBullets =
 		if (trace_debug) dprint("bullet is over\n\n");
 	}
 }
+void(float shotcount, vector dir, vector spread, float tracer) FireBullets =
+{
+    FireBulletsFrom(shotcount, dir, spread, tracer, '0 0 0');
+}
+
 
 /*
 ================

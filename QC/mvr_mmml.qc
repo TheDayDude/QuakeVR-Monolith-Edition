@@ -20,15 +20,15 @@ void() MVR_StopMMML =
 vector() MVR_MMMLSocket =
 {
     makevectors(self.handrot);
-    return self.handpos + 14.3*v_forward - 9.75*v_right + 7.8*v_up;
+    return self.handpos + 0.60*(14.3*v_forward - 9.75*v_right + 7.8*v_up);
 }
 
 void() MVR_MMMLMissile =
 {
     float index = 8-self.mmml_remaining;
     makevectors(self.handrot);
-    vector target = self.handpos + v_forward*24 + v_right*(5.1-3.4*(index & 3))
-                    + v_up*(index < 4 ? 9.5 : 6.1);
+    vector target = self.handpos + 0.60*(v_forward*24 + v_right*(5.1-3.4*(index & 3))
+                    + v_up*(index < 4 ? 9.5 : 6.1));
     traceline(self.handpos,target,FALSE,self);
     vector muzzle = trace_endpos;
     makevectors(self.shotrot);

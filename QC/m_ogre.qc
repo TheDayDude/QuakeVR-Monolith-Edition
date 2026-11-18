@@ -436,6 +436,7 @@ float() ogre_checkgib =
 
 void() ogre_die =
 {
+	DropEnemyWeapon("weapon_grenadelauncher", SetupGrenadeLauncherPickup);
 // check for gib
 	if (ogre_checkgib()) return;
 	
@@ -637,6 +638,7 @@ void() monster_ogre =
 	}
 
 	precache_model ("progs/ogre_qbj.mdl");
+	precache_model ("progs/g_grenlauncher.mdl");
 	precache_model ("progs/gibs/gibhead_ogre.mdl");
 	precache_model ("progs/proj_grenade.mdl");
 	precache_model ("progs/effect_taser_swing.mdl");	

@@ -767,13 +767,13 @@ QVR_CVAR(vr_menu_link_dryrun, "0", CVAR_NONE)       // the menus' links (the ver
 QVR_CVAR(vr_update_check, "1", CVAR_ARCHIVE)           // the start-up check for a newer release (0: never asked for, and no notice). Never in the kit's test runs (QVR_TEST_BACKGROUND): vr_update_check_now asks
 QVR_CVAR(vr_update_url, "", CVAR_NONE)                 // test aid: the feed(s) read instead of GitHub's latest release's latest.json (one URL, or several separated by ';' or spaces, in order: qvr-setup serve's http://127.0.0.1:<port>/latest.json)
 QVR_CVAR(vr_update_test_version, "", CVAR_NONE)        // test aid: this version stands in for the feed's ("9.9.9": the notice shows; "0.0.1": it does not), checked or not
-QVR_CVAR(vr_menu_vr_style, "1", CVAR_ARCHIVE)          // menus made for the headset (vr_menuui.cpp): filling the panel, rows spaced out, modern sliders and switches, a laser pointer
+QVR_CVAR(vr_menu_vr_style, "0", CVAR_ARCHIVE)          // menus made for the headset (vr_menuui.cpp): filling the panel, rows spaced out, modern sliders and switches, a laser pointer
 QVR_CVAR(vr_menu_main_mods, "0", CVAR_ARCHIVE)        // the main menu's Mods row (Options > Mods has it anyway; Ironwail's own rule still hides it for a mod with its own menu)
 QVR_CVAR(vr_menu_fine_step, "0.1", CVAR_ARCHIVE)      // a slider's step while the fine-adjust modifier is held (a grip in the headset, Shift on a flat screen): this much of its own (0.01 to 1)
 QVR_CVAR(vr_menu_section_gap, "0.75", CVAR_ARCHIVE)   // the VR pages' space above each section's header (and under the page's title), in rows (0 to 2: 0 none)
 QVR_CVAR(vr_menu_flat_shortcuts, "1", CVAR_ARCHIVE)    // the VR menus' corner buttons (Back to game, Search, Console, VR Settings, Advanced VR, Levels, Map Library, Relighting) on a flat screen too, for the desktop mouse (vr_menuui.cpp)
 QVR_CVAR(vr_menu_laser_hue, "-1", CVAR_ARCHIVE)        // that laser's colour: hue (degrees; 35 amber; -1 vr_player_hue)
-QVR_CVAR(vr_menu_recolor, "1", CVAR_ARCHIVE)          // the menus' browns, tans and oranges (letters, pictures, sliders, panels) turned blood red by their hue alone, the Quake VR banner left as it is (vr_menubrand.cpp; gl_shaders.h's gui shader)
+QVR_CVAR(vr_menu_recolor, "0", CVAR_ARCHIVE)          // the menus' browns, tans and oranges (letters, pictures, sliders, panels) turned blood red by their hue alone, the Quake VR banner left as it is (vr_menubrand.cpp; gl_shaders.h's gui shader)
 QVR_CVAR(vr_menu_recolor_strength, "1", CVAR_ARCHIVE)  // with it, how far towards the hue (0 to 1)
 QVR_CVAR(vr_menu_recolor_hue, "0", CVAR_ARCHIVE)       // with it, the hue they turn to (degrees; 0 red, the banner's; 345 crimson, 20 red-orange; -1 vr_player_hue)
 QVR_CVAR(vr_menu_recolor_saturation, "3", CVAR_ARCHIVE)    // with it, their colourfulness times this (as far as the hue's colours go; 0.5 to 3; their lightness always kept)

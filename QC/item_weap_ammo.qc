@@ -146,15 +146,39 @@ Keys:
 /*FGD
 @PointClass base(Weapon) model({ "path": ":progs/g_pistol.mdl" }) = weapon_pistol : "Pistol." []
 */
-void() weapon_pistol =
+void() SetupPistolPickup =
 {
-	if (!SUB_ShouldSpawn()) return;
-	precache_model3 ("progs/g_pistol.mdl");
 	setmodel (self, "progs/g_pistol.mdl");
 	self.items = IT_SHOTGUN;
 	self.ammo_shells = 0; //FlakTax
 	self.netname = "Stechkin Pistol";
+}
+
+void() weapon_pistol =
+{
+	if (!SUB_ShouldSpawn()) return;
+	precache_model3 ("progs/g_pistol.mdl");
+	SetupPistolPickup();
 	StartWeapon();
+}
+
+void(string pickup_class, void() setup) DropEnemyWeapon =
+{
+	entity monster = self;
+	self = spawn();
+	self.classname = pickup_class;
+	setup();
+	self.type = "weapon";
+	self.touch = weapon_touch;
+	self.movetype = MOVETYPE_TOSS;
+	self.solid = SOLID_TRIGGER;
+	self.flags |= FL_ITEM;
+	setsize(self, '-8 -8 0', '8 8 12');
+	setorigin(self, monster.origin + '0 0 8');
+	self.velocity = '0 0 100';
+	self.velocity_x = crandom() * 80;
+	self.velocity_y = crandom() * 80;
+	self = monster;
 }
 
 void() weapon_shotgun = {weapon_pistol();} //for legacy compat
@@ -251,14 +275,19 @@ Keys:
 @PointClass base(Weapon) model({ "path": ":progs/g_grenlauncher.mdl" }) = weapon_grenadelauncher : "Grenade Launcher.
 8 rockets." []
 */
-void() weapon_grenadelauncher =
+void() SetupGrenadeLauncherPickup =
 {
-	if (!SUB_ShouldSpawn()) return;
-	precache_model_safe ("progs/g_grenlauncher.mdl");
 	setmodel (self, "progs/g_grenlauncher.mdl");
 	self.items = IT_GRENADE_LAUNCHER;
 	self.ammo_rockets = 8;
 	self.netname = "RG-6 Grenade Launcher";
+}
+
+void() weapon_grenadelauncher =
+{
+	if (!SUB_ShouldSpawn()) return;
+	precache_model_safe ("progs/g_grenlauncher.mdl");
+	SetupGrenadeLauncherPickup();
 	StartWeapon();
 }
 

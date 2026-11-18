@@ -203,6 +203,7 @@ float() hknight_checkgib =
 
 void() hknight_die =
 {
+    MVR_DropMelee(MVR_GREATSWORD);
 // check for gib
 	if (hknight_checkgib()) return;
 

@@ -33,6 +33,8 @@ void() W_Precache =
 	
 	precache_model ("progs/v_wrench.mdl");						// 1 Melee
 	precache_model ("progs/v_mvrwrench.mdl");
+    precache_model ("progs/v_trenchmace.mdl");
+    precache_model ("progs/v_greatsword.mdl");
 	precache_model ("progs/v_berserk.mdl");
 	precache_sound ("impact/fist_hit.wav");
 	precache_sound ("impact/fist_impact1.wav");
@@ -56,6 +58,9 @@ void() W_Precache =
 											// 2 Pistol
 	precache_model ("progs/bullet_casing.mdl");
 	precache_model ("progs/pistol_mag.mdl");
+    precache_model("progs/v_mvrpistol.mdl");
+    precache_model("progs/v_mvrmace.mdl");
+    precache_model("progs/v_mvrsword.mdl");
 	precache_model("progs/v_mvrgren.mdl");
 	precache_model("progs/mvr_canister.mdl");
 	precache_model("progs/v_mvrmmml.mdl");
@@ -209,12 +214,14 @@ void() W_Precache =
 	//=============================================================================================
 											// Misc
 	precache_sound ("misc/draw1.wav");
+    precache_sound("enforcer/enfire.wav");
+    precache_model("progs/proj_laser.mdl");
 	
 	//=============================================================================================	
 
 
 
-	for (float i = 0; i < 9; i++) {
+	for (float i = 0; i <= MAX_WEAPON_NUM; i++) {
 		if (weaponsclass[i].model != "") precache_model(weaponsclass[i].model);
 	}
 
@@ -401,7 +408,20 @@ weaponclass_t wpc_invoker = {
 };
 
 
-weaponclass_t weaponsclass[9] = {
+weaponclass_t wpc_mace = {
+    WID_MACE, 1, 1, "Trench Mace", "progs/v_trenchmace.mdl", 0, 0, 0,
+    weaponanim_wrench, SUB_Null, weaponanim_draw_wrench
+};
+weaponclass_t wpc_greatsword = {
+    WID_GREATSWORD, 1, 2, "Greatsword", "progs/v_greatsword.mdl", 0, 0, 0,
+    weaponanim_wrench, SUB_Null, weaponanim_draw_wrench
+};
+
+weaponclass_t wpc_trench = { WID_TRENCH,3,1,"Trenchgun","progs/v_trenchgun.mdl",0,0,0,weaponanim_null,SUB_Null,SUB_Null };
+weaponclass_t wpc_plasma = { WID_PLASMA,4,1,"Plasma Trenchgun","progs/v_plasmatrench.mdl",0,0,0,weaponanim_null,SUB_Null,SUB_Null };
+weaponclass_t wpc_quad = { WID_QUAD,7,1,"Quad Launcher","progs/v_quadlauncher.mdl",0,0,0,weaponanim_null,SUB_Null,SUB_Null };
+
+weaponclass_t weaponsclass[14] = {
 	wpc_no_weapon,
 	wpc_axe,
 	wpc_shotgun,
@@ -410,14 +430,19 @@ weaponclass_t weaponsclass[9] = {
 	wpc_supernailgun,
 	wpc_grenade,
 	wpc_rocket,
-	wpc_invoker
+	wpc_invoker, wpc_mace, wpc_greatsword, wpc_trench, wpc_plasma, wpc_quad
 };
 
-float MAX_WEAPON_NUM = 8;
+float MAX_WEAPON_NUM = 13;
 
 float(float weap) getWeapon = {
 	switch (weap) {
-		case IT_AXE:			return 1;
+		case WID_MACE: return 9;
+        case WID_GREATSWORD: return 10;
+        case WID_TRENCH: return 11;
+        case WID_PLASMA: return 12;
+        case WID_QUAD: return 13;
+        case IT_AXE:			return 1;
 		case IT_SHOTGUN:		return 2;
 		case IT_SUPER_SHOTGUN:		return 3;
 		case IT_NAILGUN:		return 4;
@@ -438,13 +463,13 @@ typedef struct {
 
 weaponslot_t weaponslots[9] = {
 	{{wpc_no_weapon}, 1}, 	//0
-	{{wpc_axe}, 1}, 	//1
+	{{wpc_axe, wpc_mace, wpc_greatsword}, 3}, 	//1
 	{{wpc_shotgun}, 1}, 	//2
-	{{wpc_supershotgun}, 1},//3
-	{{wpc_nailgun}, 1}, 	//4
+	{{wpc_supershotgun, wpc_trench}, 2},//3
+	{{wpc_nailgun, wpc_plasma}, 2}, 	//4
 	{{wpc_supernailgun}, 1},//5
 	{{wpc_grenade}, 1}, 	//6
-	{{wpc_rocket}, 1}, 	//7
+	{{wpc_rocket, wpc_quad}, 2}, 	//7
 	{{wpc_invoker}, 1} 	//8
 };
 
@@ -486,7 +511,13 @@ Called every frame so impulse events can be handled as well as possible
 */
 void() W_WeaponFrame =
 {
-	if (self.weapon == IT_LIGHTNING && (self.vrbits0 & MVR_TRACKED)) {
+	if (KnightWeapon(self.weapon)) {
+        self.attackhold = self.button0 && self.attackpressed;
+        KnightFrame();
+        self.attackpressed = self.button0;
+        return;
+    }
+    if (self.weapon == IT_LIGHTNING && (self.vrbits0 & MVR_TRACKED)) {
 		MVR_InvokerFrame();
 		self.attackpressed = self.button0;
 		return;
@@ -552,6 +583,8 @@ float(float weap, entity cl) W_CheckWeapon =
 	
 	if (weap == IT_NO_WEAPON) return WEAPONSTAT_AVAILABLE;
 
+	if (KnightWeapon(weap)) return (cl.knight_owned & KnightBit(weap-WID_TRENCH)) ? WEAPONSTAT_AVAILABLE : WEAPONSTAT_NOWEAPON;
+	if (MVR_MeleeKind(weap)) return (cl.melee_owned & MVR_MeleeKind(weap)) ? WEAPONSTAT_AVAILABLE : WEAPONSTAT_NOWEAPON;
 	if (!(cl.items & weap)) return WEAPONSTAT_NOWEAPON;
 	// Drawing a carried weapon is allowed even when its ammunition is exhausted.
 	if (cl.mvr_drawing) return WEAPONSTAT_AVAILABLE;
@@ -618,6 +651,8 @@ float(float weap, float forcereset = FALSE) W_ChangeWeapon =
 	self.weaponreload_perc = 0;
 	weaponclass_t weapcl = weaponsclass[getWeapon(weap)];
 
+	self.wrench_sample = self.wrench_swinging = 0;
+	KnightClearHands();
 	self.prev_weapon = self.weapon;
 	self.weapon = weap;
 	self.currentammo = self.(ammofieldlist[weapcl.ammofield]);

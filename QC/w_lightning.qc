@@ -181,7 +181,7 @@ void(vector start, vector limit, entity from, float damage) LightningBeam =
 		}
 		// we go through multidamage here because T_Damage clears ZAPPED and we
 		// need to preserve that flag until we're done so we don't double damage
-		AddMultiDamage (targ, damage);
+		AddMultiDamage (targ, damage * MVR_HeadshotMultiplier(from, targ, end));
 		// clear and apply multidamage must be called in an enclosing function!
 		particle (end, '0 0 100', 225, damage*4);
 	}
@@ -219,7 +219,7 @@ void(vector start, vector limit, entity from, float damage) LightningBeam =
 	{
 		trace_ent.customflags |= CFL_ZAPPED;
 		particle (trace_endpos, '0 0 100', 225, damage*4);
-		AddMultiDamage (trace_ent, damage);
+		AddMultiDamage (trace_ent, damage * MVR_HeadshotMultiplier(from, trace_ent, trace_endpos));
 	}
 
 	traceline2(start - left, end - left, from, 0);
@@ -227,7 +227,7 @@ void(vector start, vector limit, entity from, float damage) LightningBeam =
 	{
 		trace_ent.customflags |= CFL_ZAPPED;
 		particle (trace_endpos, '0 0 100', 225, damage*4);
-		AddMultiDamage (trace_ent, damage);
+		AddMultiDamage (trace_ent, damage * MVR_HeadshotMultiplier(from, trace_ent, trace_endpos));
 	}
 }
 

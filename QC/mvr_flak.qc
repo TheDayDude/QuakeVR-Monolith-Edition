@@ -47,9 +47,9 @@ void() MVR_FlakFrame =
     }
     makevectors(self.handrot);
     vector delta = self.offhandpos - self.handpos;
-    vector rack = v_forward*3.5 + v_right*2 + v_up*3;
-    vector feed = v_forward*7 - v_up;
-    vector pump = v_forward*17 + v_up*2;
+    vector rack = 0.70*(v_forward*3.5 + v_right*2 + v_up*3);
+    vector feed = 0.70*(v_forward*7 - v_up);
+    vector pump = 0.70*(v_forward*17 + v_up*2);
     float progress = 0;
     if (self.flak_held) {
         setorigin(self.flak_held,self.offhandpos);
@@ -70,14 +70,14 @@ void() MVR_FlakFrame =
         }
     } else if (self.flak_stroke) {
         float travel = delta*v_forward - self.flak_start;
-        progress = min(1,max(0,travel/3.3));
+        progress = min(1,max(0,travel/(3.3*0.70)));
         if (!self.button3 || vlen(delta - pump - v_forward*travel) > 6) {
             self.flak_stroke = self.flak_open = 0;
             progress = 0;
         } else if (!self.flak_open && progress >= 1) {
             self.flak_open = 1;
             if (self.flak_chamber)
-                MVR_LooseShell(self.handpos+v_forward*9.3+v_right*1+v_up*4.1, v_up*70+v_right*45, self.flak_chamber == 1);
+                MVR_LooseShell(self.handpos+0.70*(v_forward*9.3+v_right*1+v_up*4.1), v_up*70+v_right*45, self.flak_chamber == 1);
             self.flak_chamber = 0;
         } else if (self.flak_open && progress < .15) {
             if (self.flak_tube) {

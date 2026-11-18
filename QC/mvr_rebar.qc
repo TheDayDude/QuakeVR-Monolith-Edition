@@ -38,8 +38,8 @@ void() MVR_RebarFrame =
     }
     makevectors(self.handrot);
     vector delta = self.offhandpos-self.handpos;
-    vector feed = v_forward*16 + v_right*7 + v_up;
-    vector handle = v_forward*19 - v_right*8 - v_up*2;
+    vector feed = 0.55*(v_forward*16 + v_right*7 + v_up);
+    vector handle = 0.55*(v_forward*19 - v_right*8 - v_up*2);
     float progress = 0;
     if (self.rebar_bundle) {
         setorigin(self.rebar_bundle,self.offhandpos);
@@ -51,7 +51,7 @@ void() MVR_RebarFrame =
         } else if (!(self.vrbits0 & 2)) MVR_ReturnRebar();
     } else if (self.rebar_pull) {
         float travel = self.rebar_start - delta*v_forward;
-        progress = min(1,max(0,travel/4));
+        progress = min(1,max(0,travel/(4*0.55)));
         if (!self.button3 || vlen(delta-handle+v_forward*travel) > 6) {
             self.rebar_pull = progress = 0;
         } else if (progress == 1 && !self.rebar_live) {

@@ -144,7 +144,7 @@ void() T_MissileExplode =
 	
 	if (other.health)
 	{
-		T_Damage (other, self, self.trueowner, damg, DMGTYPE_EXPLOSION | DMGTYPE_ZKILL );	// so ogre rockets kill zombies despite being too weak
+		T_Damage (other, self, self.trueowner, damg * MVR_HeadshotMultiplier(self.trueowner, other, self.origin), DMGTYPE_EXPLOSION | DMGTYPE_ZKILL );	// so ogre rockets kill zombies despite being too weak
 	}
 
 	// don't do radius damage to other, because all damage will be done in the impact

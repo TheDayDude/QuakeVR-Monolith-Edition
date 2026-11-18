@@ -23,14 +23,72 @@
 */
 //=============================================================================================
 
+float(float id) MVR_MeleeKind =
+{
+    if (id == WID_MACE) return MVR_MACE;
+    if (id == WID_GREATSWORD) return MVR_GREATSWORD;
+    return 0;
+}
+
+string(float kind) MVR_MeleeModel =
+{
+    if (kind == MVR_MACE) return "progs/v_mvrmace.mdl";
+    if (kind == MVR_GREATSWORD) return "progs/v_mvrsword.mdl";
+    return "progs/v_mvrwrench.mdl";
+}
+
+void() MVR_MeleePickup =
+{
+    if (other.classname != "player" || other.health <= 0 || (other.vrbits0 & MVR_TRACKED)) return;
+    if (other.melee_owned & self.melee_kind) return;
+    other.melee_owned |= self.melee_kind;
+    sprint(other, self.melee_kind == MVR_MACE ? "Picked up Trench Mace.\n" : "Picked up Greatsword.\n");
+    sound(other, CHAN_ITEM, "weapons/pkup.wav", 1, ATTN_NORM);
+    entity drop = self;
+    remove(drop);
+}
+
+void(entity drop, float kind, vector pos) MVR_InitMeleePickup =
+{
+    drop.classname = "mvr_melee_pickup";
+    drop.melee_kind = kind;
+    drop.netname = kind == MVR_MACE ? "Trench Mace" : "Greatsword";
+    drop.movetype = MOVETYPE_TOSS;
+    drop.solid = SOLID_TRIGGER;
+    drop.touch = MVR_MeleePickup;
+    drop.angles_z = 90;
+    setmodel(drop, kind == MVR_MACE ? "progs/v_trenchmace.mdl" : "progs/v_greatsword.mdl");
+    setsize(drop, '-14 -14 -3', '14 14 8');
+    setorigin(drop, pos);
+}
+
+void() weapon_trenchmace = { MVR_InitMeleePickup(self, MVR_MACE, self.origin); }
+void() weapon_greatsword = { MVR_InitMeleePickup(self, MVR_GREATSWORD, self.origin); }
+
+void(float kind) MVR_DropMelee =
+{
+    if (self.melee_dropped) return;
+    self.melee_dropped = TRUE;
+    entity drop = spawn();
+    MVR_InitMeleePickup(drop, kind, self.origin + '0 0 12');
+    drop.velocity = '0 0 110';
+}
+
 float() weaponanim_wrench =
 {
-	if (has_berserk(self))
+	if (self.weapon == IT_AXE && has_berserk(self))
 		return weaponanim_berserk();
 
 	if (self.vrbits0 & MVR_TRACKED) return FALSE;
 
-	if (self.attack_finished > time)
+	if (MVR_MeleeKind(self.weapon) && self.attack_finished <= time) {
+        self.attack_finished = time + 0.8;
+        sound(self, CHAN_OTHER, "impact/wrench_swing.wav", 1, ATTN_NORM);
+        SUB_CallAsSelf(player_wrench1, self.animcontroller);
+        W_FireWrench();
+        return FALSE;
+    }
+    if (self.attack_finished > time)
 		return FALSE;
 
 	//sound (self, CHAN_OTHER, "weapons/ax1.wav", 1, ATTN_NORM);
@@ -78,13 +136,13 @@ void() weaponanim_wrench_loop =
 
 void() weaponanim_draw_wrench =
 {		
-	if (has_berserk(self)) {
+	if (self.weapon == IT_AXE && has_berserk(self)) {
 		weaponanim_draw_berserker();
 		return;
 	}
 
-	if (self.vrbits0 & MVR_TRACKED) {
-        self.weaponmodel = "progs/v_mvrwrench.mdl";
+	if (MVR_MeleeKind(self.weapon) || (self.vrbits0 & MVR_TRACKED)) {
+        self.weaponmodel = (self.vrbits0 & MVR_TRACKED) ? MVR_MeleeModel(MVR_MeleeKind(self.weapon)) : (self.weapon == WID_MACE ? "progs/v_trenchmace.mdl" : "progs/v_greatsword.mdl");
         self.weaponframe = 0;
         return;
     }
@@ -220,25 +278,25 @@ void() W_FireWrench =
 	
 	vector dir = v_right * 20 - v_up*5; // direction for blood particles
 
-	if (shortest_hit1 < 1000) hitwrench(hitent1, hitpos1 - v_forward*4, dir);
-	if (shortest_hit2 < 1000 && hitent1 != hitent2) hitwrench(hitent2, hitpos2 - v_forward*4, dir);
+	if (shortest_hit1 < 1000) hitwrench(hitent1, hitpos1 - v_forward*4, dir, MVR_MeleeKind(self.weapon));
+	if ((MVR_MeleeKind(self.weapon) != MVR_MACE || shortest_hit1 == 1000 || !hitent1.takedamage) && shortest_hit2 < 1000 && hitent1 != hitent2) hitwrench(hitent2, hitpos2 - v_forward*4, dir, MVR_MeleeKind(self.weapon));
 };
 //=============================================================================================
 
-void(entity hitent, vector org, vector dir) hitwrench =
+void(entity hitent, vector org, vector dir, float kind) hitwrench =
 {
 	if (hitent.takedamage) 
 	{		
-		hitent.wrenchhitme = 1;
+		hitent.wrenchhitme = kind != MVR_GREATSWORD;
 
 		SpawnBlood(org, dir, 60);
 
 		FX_Impact(FX_BLOOD, org, dir);
 
 		if (hitent.classname == "monster_zombie") //keep zombies Unbonkable
-			T_Damage(hitent, self, self, 59, DMGTYPE_MELEE);
+			T_Damage(hitent, self, self, 59, DMGTYPE_MELEE, kind == MVR_GREATSWORD);
 		else	
-			T_Damage(hitent, self, self, 60, DMGTYPE_MELEE);
+			T_Damage(hitent, self, self, kind == MVR_MACE ? 68 : 60, DMGTYPE_MELEE, kind == MVR_GREATSWORD);
 		
 		//johnfitz -- make clank sound when hitting brushmodels
 		if (hitent.movetype == MOVETYPE_PUSH || hitent.movetype == MOVETYPE_NONE)
@@ -248,7 +306,7 @@ void(entity hitent, vector org, vector dir) hitwrench =
 		{	
 			sound_wrench_hit_enemy(1);
 					
-			if ((hitent.movetype == MOVETYPE_STEP || hitent.movetype == MOVETYPE_WALK) && 
+			if (kind != MVR_GREATSWORD && (hitent.movetype == MOVETYPE_STEP || hitent.movetype == MOVETYPE_WALK) && 
 				// don't swat bosses or other non-standard-sized enemies around
 				hitent.maxs_x <= 32 && hitent.health > 0 && hitent.type != "boss")
 			{
@@ -280,7 +338,7 @@ void(entity hitent, vector org, vector dir) hitwrench =
 		// do knockback with a quad
 		if (has_quad(self))
 		{
-			if ((hitent.movetype == MOVETYPE_STEP || hitent.movetype == MOVETYPE_WALK) && 
+			if (kind != MVR_GREATSWORD && (hitent.movetype == MOVETYPE_STEP || hitent.movetype == MOVETYPE_WALK) && 
 				// don't swat bosses or other non-standard-sized enemies around
 				hitent.maxs_x <= 32 && hitent.health > 0 && hitent.type != "boss")
 			{
@@ -307,93 +365,77 @@ void(entity hitent, vector org, vector dir) hitwrench =
 .float vryaw, wrench_last_yaw, wrench_sample, wrench_started, wrench_moving;
 .float wrench_swinging;
 
-void(vector grip, vector tip, vector motion) MVR_WrenchContact =
+void(entity state, float kind, vector grip, vector tip, vector motion) MVR_WrenchContact =
 {
     traceline2(grip, tip, self, FALSE);
     if (trace_fraction == 1 || trace_startsolid) return;
     entity target = trace_ent;
+    if (kind == MVR_MACE && target.takedamage && state.melee_hit) return;
     vector contact = trace_endpos;
     // Each player's swing owns its contacts, including a single contact for the world.
     entity mark = world;
     while ((mark = find(mark, classname, "mvr_wrench_contact"))) {
-        if (mark.owner == self && mark.enemy == target && mark.ltime == self.wrench_started)
+        if (mark.owner == self && mark.melee_kind == kind && mark.enemy == target && mark.ltime == state.wrench_started)
             return;
     }
+    if (target.takedamage) state.melee_hit = TRUE;
     mark = spawn();
     mark.classname = "mvr_wrench_contact";
     mark.owner = self;
+    mark.melee_kind = kind;
     mark.enemy = target;
-    mark.ltime = self.wrench_started;
+    mark.ltime = state.wrench_started;
     mark.think = SUB_Remove;
     mark.nextthink = time + 0.8;
 
     self.show_hostile = time + 1;
     makevectors(vectoangles(motion));
-    hitwrench(target, contact, motion * 20);
+    hitwrench(target, contact, motion * 20, kind);
 }
 
-void() MVR_WrenchFrame =
+void(entity state, float kind, vector grip, vector tip) MVR_MeleeSwing =
 {
-    if (self.weapon != IT_AXE || has_berserk(self) || !(self.vrbits0 & MVR_TRACKED)) {
-        if (self.weapon == IT_AXE && self.weaponmodel == "progs/v_mvrwrench.mdl") {
-            self.weaponmodel = "progs/v_wrench.mdl";
-            if (has_berserk(self)) self.weaponmodel = "progs/v_berserk.mdl";
-            weaponanim_draw_wrench();
-        }
-        self.wrench_sample = self.wrench_swinging = 0;
-        return;
-    }
-
-    // Tracking can arrive after the initial weapon selection at spawn.
-    if (self.weaponmodel != "progs/v_mvrwrench.mdl") {
-        self.weaponmodel = "progs/v_mvrwrench.mdl";
-        self.weaponframe = 0;
-        self.think = SUB_Null;
-        self.wrench_sample = 0;
-    }
-
-    vector tip = self.muzzlepos; // anchor on the rendered jaw, including its weight spring
-    vector grip = self.handpos;
-    vector previous_tip = self.wrench_last_tip;
-    vector previous_grip = self.wrench_last_grip;
+    vector previous_tip = state.wrench_last_tip;
+    vector previous_grip = state.wrench_last_grip;
     vector step = tip - previous_tip;
-    vector body_step = self.origin - self.wrench_last_origin;
-    float elapsed = time - self.wrench_sample;
-    float reset = !self.wrench_sample || elapsed > 0.12 ||
-        vlen(step) > 48 || vlen(body_step) > 32 || fabs(self.vryaw - self.wrench_last_yaw) > 15;
+    vector body_step = self.origin - state.wrench_last_origin;
+    float elapsed = time - state.wrench_sample;
+    float reset = !state.wrench_sample || elapsed > 0.12 ||
+        vlen(step) > 48 || vlen(body_step) > 32 || fabs(self.vryaw - state.wrench_last_yaw) > 15;
     if (!reset && tip == previous_tip && grip == previous_grip) {
-        self.wrench_sample = time;
-        self.wrench_last_origin = self.origin;
-        if (time - self.wrench_moving > 0.09) self.wrench_swinging = FALSE;
+        state.wrench_sample = time;
+        state.wrench_last_origin = self.origin;
+        if (time - state.wrench_moving > 0.09) state.wrench_swinging = FALSE;
         return;
     }
-    self.wrench_sample = time;
-    self.wrench_last_tip = tip;
-    self.wrench_last_grip = grip;
-    self.wrench_last_origin = self.origin;
-    self.wrench_last_yaw = self.vryaw;
+    state.wrench_sample = time;
+    state.wrench_last_tip = tip;
+    state.wrench_last_grip = grip;
+    state.wrench_last_origin = self.origin;
+    state.wrench_last_yaw = self.vryaw;
     if (reset || elapsed <= 0 || vlen(tip - grip) < 4) {
-        self.wrench_swinging = FALSE;
+        state.wrench_swinging = FALSE;
         return;
     }
 
     vector swing = step - body_step;
     float speed = vlen(swing) / elapsed;
     if (speed < 32) {
-        if (time - self.wrench_moving > 0.09) self.wrench_swinging = FALSE;
+        if (time - state.wrench_moving > 0.09) state.wrench_swinging = FALSE;
         return;
     }
-    self.wrench_moving = time;
-    if (!self.wrench_swinging) {
-        if (speed < 72 || time < self.attack_finished) return;
-        self.wrench_swinging = TRUE;
-        self.wrench_started = time;
-        self.attack_finished = time + 0.8;
+    state.wrench_moving = time;
+    if (!state.wrench_swinging) {
+        if (speed < 72 || time < state.attack_finished) return;
+        state.wrench_swinging = TRUE;
+        state.melee_hit = FALSE;
+        state.wrench_started = time;
+        state.attack_finished = time + 0.8;
         sound(self, CHAN_OTHER, "impact/wrench_swing.wav", 1, ATTN_NORM);
         SuperDamageSound();
         SUB_CallAsSelf(player_wrench1, self.animcontroller);
     }
-    if (time - self.wrench_started > 0.55) return;
+    if (time - state.wrench_started > 0.55) return;
 
     // Sweep the length of the wrench through successive poses, stopping each
     // ray at its first obstruction. A later part of the arc may reach another foe.
@@ -401,7 +443,30 @@ void() MVR_WrenchFrame =
     vector direction = normalize(swing);
     for (float i = 1; i <= steps; i++) {
         float t = i / steps;
-        MVR_WrenchContact(previous_grip + (grip - previous_grip) * t,
+        MVR_WrenchContact(state, kind, previous_grip + (grip - previous_grip) * t,
             previous_tip + step * t, direction);
     }
+}
+
+void() MVR_WrenchFrame =
+{
+    if ((self.weapon != IT_AXE && !MVR_MeleeKind(self.weapon)) || (self.weapon == IT_AXE && has_berserk(self)) || !(self.vrbits0 & MVR_TRACKED)) {
+        if (self.weapon == IT_AXE && self.weaponmodel == "progs/v_mvrwrench.mdl") {
+            self.weaponmodel = "progs/v_wrench.mdl";
+            if (self.weapon == IT_AXE && has_berserk(self)) self.weaponmodel = "progs/v_berserk.mdl";
+            weaponanim_draw_wrench();
+        }
+        self.wrench_sample = self.wrench_swinging = 0;
+        return;
+    }
+
+    // Tracking can arrive after the initial weapon selection at spawn.
+    if (self.weaponmodel != MVR_MeleeModel(MVR_MeleeKind(self.weapon))) {
+        self.weaponmodel = MVR_MeleeModel(MVR_MeleeKind(self.weapon));
+        self.weaponframe = 0;
+        self.think = SUB_Null;
+        self.wrench_sample = 0;
+    }
+
+    MVR_MeleeSwing(self, MVR_MeleeKind(self.weapon), self.handpos, self.muzzlepos);
 }

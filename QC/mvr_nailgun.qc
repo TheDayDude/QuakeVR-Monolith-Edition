@@ -135,12 +135,13 @@ void(float off) MVR_NailHand =
         if (gun.spiker_safe) centerprint(self, "Spiker safety on");
         else centerprint(self, "Spiker safety off");
     }
+    float model_factor = gun.spiker ? 0.70 : 0.65;
     float magselect = gun.spiker && available && helper && !gun.nail_trigger &&
-                      vlen(delta-v_forward*8+v_up*2) < 4;
+                      vlen(delta-model_factor*(v_forward*8-v_up*2)) < 4;
     if ((magselect || (!gun.spiker && eject && !gun.nail_eject)) && gun.nail_loaded) {
         entity spent = spawn();
         setmodel(spent,gun.spiker ? "progs/spikermag.mdl" : "progs/mvr_nailmag.mdl");
-        setorigin(spent,pos+v_forward*13-v_up*4);
+        setorigin(spent,pos+model_factor*(v_forward*(gun.spiker ? 8 : 13)-v_up*(gun.spiker ? 2 : 4)));
         spent.movetype = MOVETYPE_TOSS;
         spent.think = SUB_Remove;
         spent.nextthink = time+4;
@@ -152,7 +153,7 @@ void(float off) MVR_NailHand =
     if (available && !gun.nail_loaded) {
         if (self.nail_mag && self.nail_mag.owner == gun) {
             setorigin(self.nail_mag,support);
-            if (vlen(delta-v_forward*(gun.spiker ? 8 : 13)+v_up*(gun.spiker ? 2 : 3)) < 5) {
+            if (vlen(delta-model_factor*(v_forward*(gun.spiker ? 8 : 13)-v_up*(gun.spiker ? 2 : 3))) < 5) {
                 gun.nail_loaded = TRUE;
                 gun.nail_rounds = self.nail_mag.nail_rounds;
                 remove(self.nail_mag);
@@ -176,13 +177,13 @@ void(float off) MVR_NailHand =
             gun.nail_ready = gun.nail_loaded;
     } else if (available && gun.nail_loaded) {
         float along = delta*v_forward;
-        if (helper && !gun.nail_trigger && vlen(delta-v_forward*10-v_up*6) < 5) {
+        if (helper && !gun.nail_trigger && vlen(delta-model_factor*(v_forward*10+v_up*6)) < 5) {
             gun.nail_pull = TRUE;
             gun.nail_full = FALSE;
             gun.nail_start = along;
         }
         if (gun.nail_pull) {
-            progress = min(1,max(0,(gun.nail_start-along)/2.8));
+            progress = min(1,max(0,(gun.nail_start-along)/(2.8*model_factor)));
             if (progress == 1) gun.nail_full = TRUE;
             if (!helper) {
                 if (gun.nail_full) gun.nail_ready = TRUE;

@@ -386,6 +386,7 @@ float() enf_checkgib =
 
 void() enf_die =
 {
+	KnightDrop(WID_PLASMA);
 // check for gib
 
 	if (enf_checkgib()) return;

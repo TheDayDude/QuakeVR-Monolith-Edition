@@ -161,7 +161,7 @@ void() spiralrocket_touch =
 	rdamg = 60;
 
 	if (other.health)
-		T_Damage(other, self, self.owner, damg, DMGTYPE_EXPLOSION | DMGTYPE_ZKILL );
+		T_Damage(other, self, self.owner, damg * MVR_HeadshotMultiplier(self.owner, other, self.origin), DMGTYPE_EXPLOSION | DMGTYPE_ZKILL );
 			
 	// don't do radius damage to the other, because all the damage
 	// was done in the impact.

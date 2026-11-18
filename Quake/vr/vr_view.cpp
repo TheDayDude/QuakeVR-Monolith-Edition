@@ -7971,7 +7971,13 @@ extern "C" void VR_SetupViewEntities()
     {
         updateGroundSpots(s); // (before the weapons: a carry taken by a hotspot now is drawn so this frame)
         setupWeapon(s, HAND_MAIN, precachedModel(cl.stats[STAT_WEAPON]), cl.stats[STAT_WEAPONFRAME]);
-        setupWeapon(s, HAND_OFF, precachedModel(cl.stats[STAT_QVR_WEAPONMODEL2]),
+        // Monolith reports model zero for an empty off hand.
+        qmodel_t* offModel = precachedModel(cl.stats[STAT_QVR_WEAPONMODEL2]);
+        if(!cl.stats[STAT_QVR_WEAPONMODEL2] && cl.stats[STAT_HEALTH] > 0 && !cl.intermission)
+        {
+            offModel = viewModel("progs/hand.mdl");
+        }
+        setupWeapon(s, HAND_OFF, offModel,
             cl.stats[STAT_QVR_WEAPONFRAME2]);
         setupHeldMagazines(); // (before the hands: a hand holding one wraps it)
         setupGhosts();

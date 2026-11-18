@@ -231,6 +231,7 @@ float() knight_checkgib =
 
 void() knight_die =
 {
+    MVR_DropMelee(MVR_MACE);
 	// check for gib
 	if (knight_checkgib()) return;
 	

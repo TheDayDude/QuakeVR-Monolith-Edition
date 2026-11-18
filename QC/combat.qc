@@ -133,6 +133,35 @@ void(float dmgtype = 0) ApplyMultiDamage =
 	multi_ent = world;
 }
 
+// Shot traces hit the monster's collision hull. Upright heads occupy its
+// upper band. The hound carries its head lower and forward of its shoulders.
+float(entity attacker, entity target, vector impact) MVR_HeadshotMultiplier =
+{
+    if (attacker.classname != "player" || target.health <= 0)
+        return 1;
+
+    vector offset = impact - target.origin;
+    switch (target.classname)
+    {
+    case "monster_army":
+    case "monster_enforcer":
+    case "monster_ogre":
+    case "monster_knight":
+    case "monster_hell_knight":
+        if (offset_z >= target.maxs_z - 14)
+            return 2;
+        break;
+    case "monster_dog":
+        vector facing = SinCos(target.angles_y);
+        float forward = offset_x * facing_y + offset_y * facing_x;
+        float side = offset_y * facing_y - offset_x * facing_x;
+        if (forward >= 12 && fabs(side) <= 14 && offset_z >= 0)
+            return 2;
+        break;
+    }
+    return 1;
+}
+
 void(entity hit, float damage) AddMultiDamage =
 {
 	local entity head;
@@ -401,13 +430,13 @@ now wrapped around T_DamageApply so that zapped/axe flags always get cleared
 even if the target resisted the damage
 ============
 */
-void(entity targ, entity inflictor, entity attacker, float damage, float dmgtype = 0) T_Damage =
+void(entity targ, entity inflictor, entity attacker, float damage, float dmgtype = 0, float suppress_push = 0) T_Damage =
 {
-	T_DamageApply(targ, inflictor, attacker, damage, dmgtype);
+	T_DamageApply(targ, inflictor, attacker, damage, dmgtype, suppress_push);
 	targ.customflags = not(targ.customflags, CFL_AXEHITME | CFL_ZAPPED);
 }
 
-void(entity targ, entity inflictor, entity attacker, float damage, float dmgtype = 0) T_DamageApply =
+void(entity targ, entity inflictor, entity attacker, float damage, float dmgtype = 0, float suppress_push = 0) T_DamageApply =
 {
 	vector	dir;
 	entity	oldself;
@@ -477,7 +506,8 @@ void(entity targ, entity inflictor, entity attacker, float damage, float dmgtype
 	}
 
 	// figure momentum add
-	if ( (inflictor != world) && (targ.movetype == MOVETYPE_WALK) )
+	if ( (inflictor != world) && (targ.movetype == MOVETYPE_WALK) &&
+        !suppress_push )
 	{
 		dir = targ.origin - BoundsCenter(inflictor);
 		dir = normalize(dir);

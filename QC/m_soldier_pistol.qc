@@ -344,6 +344,7 @@ float() pistolarmy_checkgib =
 
 void() pistolarmy_die =
 {
+	DropEnemyWeapon("weapon_pistol", SetupPistolPickup);
 // check for gib
 	if (pistolarmy_checkgib())
 		return;
@@ -445,6 +446,7 @@ void() monster_army_pistol =
 		return;
 	}
 	precache_model ("progs/soldier_pistol_qbj.mdl");
+	precache_model ("progs/g_pistol.mdl");
 	precache_model ("progs/gibs/gibhead_grunt_p.mdl");
 	
 	self.invokedmodel = "progs/fx/invoked_soldier_p.mdl";

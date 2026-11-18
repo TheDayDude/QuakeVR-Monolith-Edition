@@ -12,7 +12,7 @@ void() MVR_ReturnGrenade =
 vector() MVR_GrenadeSocket =
 {
     makevectors(self.handrot);
-    return self.handpos + 10.7*v_forward + 8.1*v_up;
+    return self.handpos + 0.60*(10.7*v_forward + 8.1*v_up);
 }
 
 void() MVR_GrenadeFrame =

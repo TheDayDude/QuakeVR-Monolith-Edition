@@ -52,7 +52,11 @@ void(float hand) MVR_HolsterBuzz =
 
 void(float off, entity gun) MVR_HolsterEquip =
 {
+    // Upgrade weapon entities from saves made before tracked grip models.
+    if (gun.weapon == IT_SHOTGUN) gun.weaponmodel = "progs/v_mvrpistol.mdl";
+    if (MVR_MeleeKind(gun.weapon)) gun.weaponmodel = MVR_MeleeModel(MVR_MeleeKind(gun.weapon));
     if (off) {
+        gun.wrench_sample = gun.wrench_swinging = 0;
         self.weapon2 = gun.weapon;
         self.weaponmodel2 = gun.weaponmodel;
         self.weaponframe2 = gun.frame;
@@ -60,7 +64,7 @@ void(float off, entity gun) MVR_HolsterEquip =
         else self.mvr_offweapon = gun;
     } else {
         self.mvr_drawing = TRUE;
-        self.items |= gun.weapon;
+        if (!MVR_MeleeKind(gun.weapon) && !KnightWeapon(gun.weapon)) self.items |= gun.weapon;
         W_ChangeWeapon(gun.weapon, TRUE);
         self.mvr_drawing = FALSE;
         self.weaponmodel = gun.weaponmodel;
@@ -87,7 +91,7 @@ void(float off) MVR_HolsterHand =
     float oldhover = off ? self.mvr_hover_off : self.mvr_hover_main;
     float hover = 0;
     // A reload component or engine-held prop owns its grip until released.
-    if (self.nail_mag || (off && (self.mvr_mag || self.flak_held || self.rebar_bundle || self.mmml_held || self.gren_held))) busy = TRUE;
+    if (self.nail_mag || (off && (self.knight_part || self.mvr_mag || self.flak_held || self.rebar_bundle || self.mmml_held || self.gren_held))) busy = TRUE;
     if (slot >= 0 && !busy && self.animcontroller.owner == self && !(self.customflags & CFL_WEAPONLOCK)) {
         entity stored = self.mvr_holsters[slot];
         if ((holding && !stored) || (!holding && stored)) hover = slot+1;
@@ -176,6 +180,8 @@ float parm17, parm18, parm19, parm20, parm21, parm22, parm23, parm24, parm25, pa
 float(entity gun) MVR_HolsterCode =
 {
     if (!gun) return 0;
+    if (MVR_MeleeKind(gun.weapon)) return 9 + MVR_MeleeKind(gun.weapon);
+    if (KnightWeapon(gun.weapon)) return 12+gun.weapon-WID_TRENCH;
     if (gun.spiker) return 9;
     if (gun == self.nail_main || gun == self.nail_off) return 4;
     return getWeapon(gun.weapon);
@@ -190,31 +196,32 @@ float(entity gun) MVR_HolsterNailState =
 
 string(float id, float spiker) MVR_HolsterModel =
 {
-    if (id == IT_SHOTGUN) return "progs/v_pistol.mdl";
+    if (id == IT_SHOTGUN) return "progs/v_mvrpistol.mdl";
     if (id == IT_SUPER_SHOTGUN) return "progs/v_mvrflak.mdl";
     if (id == IT_NAILGUN) return spiker ? "progs/v_spiker.mdl" : "progs/v_mvrnail.mdl";
     if (id == IT_SUPER_NAILGUN) return "progs/v_mvrrebar.mdl";
     if (id == IT_GRENADE_LAUNCHER) return "progs/v_mvrgren.mdl";
     if (id == IT_ROCKET_LAUNCHER) return "progs/v_mvrmmml.mdl";
     if (id == IT_LIGHTNING) return "progs/v_mvrinvoker.mdl";
+    if (id == IT_AXE || MVR_MeleeKind(id)) return MVR_MeleeModel(MVR_MeleeKind(id));
     return weaponsclass[getWeapon(id)].model;
 }
 
 entity(float code, float state, float pose) MVR_RestoreHolstered =
 {
-    if (code < 1 || code > 9) return world;
+    if (code < 1 || code > 14) return world;
     entity gun = spawn();
     gun.owner = self;
     gun.classname = "mvr_holstered_weapon";
     gun.spiker = code == 9;
-    gun.weapon = gun.spiker ? IT_NAILGUN : weaponsclass[code].id;
+    gun.weapon = code >= 12 ? WID_TRENCH+code-12 : code == 10 ? WID_MACE : code == 11 ? WID_GREATSWORD : gun.spiker ? IT_NAILGUN : weaponsclass[code].id;
     gun.weaponmodel = MVR_HolsterModel(gun.weapon,gun.spiker);
     gun.frame = pose;
     gun.nail_rounds = state & 31;
     gun.nail_loaded = !!(state & 32);
     gun.nail_ready = !!(state & 64);
     gun.spiker_safe = !!(state & 128);
-    self.items |= gun.weapon;
+    if (!MVR_MeleeKind(gun.weapon) && !KnightWeapon(gun.weapon)) self.items |= gun.weapon;
     return gun;
 }
 
@@ -300,4 +307,50 @@ void() MVR_RestoreHolsterParms =
         self.pistol_ammo_count = parm41 & 15;
         self.mvr_pistol_phase = floor(parm41/16);
     }
+}
+
+void(float off) MVR_GrabMelee =
+{
+    float grip = off ? 2 : 8;
+    if (!(self.vrbits0 & grip) || (self.vrbits0 & (2*grip))) return;
+    if (self.mvr_holster_used & (off ? 1 : 2)) return;
+    if (self.vrbits0 & (off ? 131072 : 262144)) return;
+    if (off && (self.weapon2 || self.nail_off || self.mvr_offweapon || self.mvr_mag ||
+        self.flak_held || self.rebar_bundle || self.gren_held || self.mmml_held)) return;
+    if (self.nail_mag || (!off && self.weapon != IT_NO_WEAPON)) return;
+    vector pos = off ? self.offhandpos : self.handpos;
+    entity drop = world, best = world;
+    float reach = 12;
+    while ((drop = find(drop, classname, "mvr_melee_pickup"))) {
+        float dist = vlen(drop.origin - pos);
+        if (dist >= reach || (self.melee_owned & drop.melee_kind)) continue;
+        traceline(pos, drop.origin, TRUE, self);
+        if (trace_fraction < 1) continue;
+        best = drop;
+        reach = dist;
+    }
+    if (!best) return;
+    self.melee_owned |= best.melee_kind;
+    best.weapon = best.melee_kind == MVR_MACE ? WID_MACE : WID_GREATSWORD;
+    best.weaponmodel = MVR_MeleeModel(best.melee_kind);
+    best.classname = "mvr_carried_melee";
+    best.owner = self;
+    best.touch = SUB_Null;
+    best.solid = SOLID_NOT;
+    best.movetype = MOVETYPE_NONE;
+    best.modelindex = 0;
+    best.model = string_null;
+    MVR_HolsterEquip(off, best);
+    sound(self, CHAN_ITEM, "weapons/pkup.wav", 1, ATTN_NORM);
+}
+
+void() MVR_MeleeHands =
+{
+    if (!(self.vrbits0 & MVR_TRACKED) || self.health <= 0 ||
+        self.animcontroller.owner != self || (self.customflags & CFL_WEAPONLOCK)) return;
+    MVR_GrabMelee(FALSE);
+    MVR_GrabMelee(TRUE);
+    entity off = self.mvr_offweapon;
+    if (off && (off.weapon == IT_AXE || MVR_MeleeKind(off.weapon)))
+        MVR_MeleeSwing(off, MVR_MeleeKind(off.weapon), self.offhandpos, self.offmuzzlepos);
 }

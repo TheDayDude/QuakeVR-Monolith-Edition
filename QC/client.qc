@@ -61,6 +61,11 @@ void() SetChangeParms =
 		self.health = max(self.health, 50);
 	
 	MVR_SaveHolsterParms();
+    parm43 = self.knight_owned;
+    parm44 = self.knight_reserve[0]; parm45 = self.knight_reserve[1]; parm46 = self.knight_reserve[2];
+    parm47 = self.knight_loaded[0]+16*self.knight_ready[0];
+    parm48 = self.knight_loaded[1]+32*self.knight_ready[1]; parm49 = self.knight_loaded[2];
+	parm12 = self.melee_owned;
 	parm1 = self.items;
 	parm2 = self.health;
 	parm3 = self.armorvalue;
@@ -87,6 +92,8 @@ void() SetChangeParms =
 void() SetNewParms =
 {
 	MVR_NewHolsterParms();
+    parm43 = parm44 = parm45 = parm46 = parm47 = parm48 = parm49 = 0;
+	parm12 = 0;
 	parm11 = 0;
 	parm1 = IT_SHOTGUN | IT_AXE;
 	parm2 = 100;
@@ -120,7 +127,9 @@ void() SetNewParms =
 void() SetCoopParms =
 {
 	MVR_NewHolsterParms();
+    parm43 = parm44 = parm45 = parm46 = parm47 = parm48 = parm49 = 0;
 	parm11 = 0;
+	parm12 = self.melee_owned;
 	parm1 = self.items & IT_WEAPONS;
 	parm2 = 100;
 	parm4 = max(16,self.ammo_shells); // Reduced from 24 to 16 for Co-op
@@ -151,6 +160,10 @@ void() DecodeLevelParms =
 	if (world.model == "maps/start.bsp")
 		SetNewParms ();		// take away all stuff on starting new episode
 	
+	self.melee_owned = parm12 & 3;
+	// Older maps encoded the selected melee variant above the ownership bits.
+    if (parm8 == IT_AXE && floor(parm12/4) == MVR_MACE) parm8 = WID_MACE;
+    if (parm8 == IT_AXE && floor(parm12/4) == MVR_GREATSWORD) parm8 = WID_GREATSWORD;
 	self.items = parm1;
 	self.health = parm2;
 	self.armorvalue = parm3;
@@ -168,7 +181,12 @@ void() DecodeLevelParms =
 	self.mmml_loaded = floor(parm11/8192) & 1;
 	self.rebar_live = floor(parm11/4096) & 1;
 	
-	MVR_RestoreHolsterParms();
+	self.knight_owned = parm43;
+    self.knight_reserve[0] = parm44; self.knight_reserve[1] = parm45; self.knight_reserve[2] = parm46;
+    self.knight_loaded[0] = parm47 & 15; self.knight_ready[0] = floor(parm47/16);
+    self.knight_loaded[1] = parm48 & 31; self.knight_ready[1] = floor(parm48/32);
+    self.knight_loaded[2] = parm49;
+    MVR_RestoreHolsterParms();
 	//self.weapon = parm8;
 	W_ChangeWeapon(parm8, FALSE);
 
@@ -671,6 +689,7 @@ void() PutClientInServer =
 	MVR_ReturnRebar();
 	self.rebar_live = self.rebar_rounds = self.rebar_pull = 0;
 	MVR_ResetNails();
+	KnightClearHands();
 	MVR_ResetHolsters();
 	self.pistol_ammo_count = 10;
 	self.enemy = world;
@@ -1940,6 +1959,7 @@ void() PlayerPostThink =
 	MVR_HolsterFrame();
 	MVR_NailFrame();
 	MVR_PistolFrame();
+	MVR_MeleeHands();
 	MVR_WrenchFrame();
 	MVR_FlakFrame();
 	MVR_RebarFrame();
@@ -2121,6 +2141,7 @@ void() ClientDisconnect =
 	MVR_StopMMML();
 	MVR_ReturnGrenade();
 	MVR_ResetNails();
+	KnightClearHands();
 	MVR_ResetHolsters();
 	if (gameover)
 		return;

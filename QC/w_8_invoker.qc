@@ -242,6 +242,7 @@ void(vector org, vector dir, float drawTrail) invokerTrace =
 
 			if (target_ent.takedamage && target_ent != self)
 			{
+				float multiplier = MVR_HeadshotMultiplier(self, target_ent, trace_endpos);
 				vel = dir + 2*trace_plane_normal;
 				vel = vel * 200;
 
@@ -254,9 +255,9 @@ void(vector org, vector dir, float drawTrail) invokerTrace =
 				target_ent.effects = target_ent.effects | EF_MUZZLEFLASH;
 
 				if (deathmatch != 0)
-					T_Damage (target_ent, self, self, 333);
+					T_Damage (target_ent, self, self, 333 * multiplier);
 				else
-					T_Damage (target_ent, self, self, 666);
+					T_Damage (target_ent, self, self, 666 * multiplier);
 				
 				// ded
 				if (target_ent && target_ent.health <= 0 && target_ent.flags & (FL_MONSTER | FL_CLIENT))

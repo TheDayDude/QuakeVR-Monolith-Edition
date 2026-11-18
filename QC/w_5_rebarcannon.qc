@@ -164,7 +164,7 @@ void() ImpalerTouch =
 		if (other.classname == "monster_zombie")
 			T_Damage(other, self, self.trueowner, 59);
 		else
-			T_Damage(other, self, self.trueowner, 100);
+			T_Damage(other, self, self.trueowner, 100 * MVR_HeadshotMultiplier(self.trueowner, other, self.origin));
 
 		if (other.solid != SOLID_BSP) {
 			ThrowGib ("progs/zom_gib.mdl", GibVelocityForHealth(20));

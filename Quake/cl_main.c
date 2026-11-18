@@ -783,20 +783,7 @@ void CL_RelinkEntities (void)
 		ent->forcelink = false;
 
 		if (i == cl.viewentity && !chase_active.value)
-		{
-			static entity_t rover;
-			if (!VR_IsActive () || cl.stats[STAT_HEALTH] <= 0 ||
-			    !ent->model || q_strncasecmp(ent->model->name, "progs/player_qbj.", 17))
-				continue;
-			rover = *ent;
-			rover.model = Mod_ForName ("progs/rover_body.mdl", false);
-			if (!rover.model)
-				continue;
-			rover.angles[PITCH] = 0;
-			if (cl_numvisedicts < MAX_VISEDICTS)
-				cl_visedicts[cl_numvisedicts++] = &rover;
-			continue;
-		}
+			continue; // The local VR avatar is posed by setupBody.
 
 		if (VR_BulletHoleSprite (i)) // QVR: a chip decal in its place
 			continue;

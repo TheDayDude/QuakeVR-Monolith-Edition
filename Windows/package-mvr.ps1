@@ -33,7 +33,13 @@ Copy-Item "$devkit/maps/b_*.bsp","$hub/mvr_start.bsp" "$Destination/mvr/maps"
 if (Test-Path "$hub/mvr_start.lit") {
     Copy-Item "$hub/mvr_start.lit" "$Destination/mvr/maps"
 }
-Copy-Item "$repo/mvr/progs/v_mvrinvoker.mdl","$repo/mvr/progs/v_mvrwrench.mdl","$repo/mvr/progs/v_mvrgren.mdl","$repo/mvr/progs/mvr_canister.mdl","$repo/mvr/progs/v_mvrmmml.mdl","$repo/mvr/progs/mvr_mmmlrack.mdl","$repo/mvr/progs/v_mvrflak.mdl","$repo/mvr/progs/mvr_flakshell.mdl","$repo/mvr/progs/v_mvrnail.mdl","$repo/mvr/progs/mvr_nailmag.mdl","$repo/mvr/progs/v_mvrrebar.mdl","$repo/mvr/progs/mvr_rebarbundle.mdl" "$Destination/mvr/progs"
+Copy-Item "$repo/mvr/progs/v_mvrinvoker.mdl","$repo/mvr/progs/v_mvrwrench.mdl","$repo/mvr/progs/v_trenchmace.mdl","$repo/mvr/progs/v_trenchmace.md3","$repo/mvr/progs/v_trenchmace.md3_0.skin","$repo/mvr/progs/v_greatsword.mdl","$repo/mvr/progs/v_greatsword.md3","$repo/mvr/progs/v_greatsword.md3_0.skin","$repo/mvr/progs/v_trenchgun.mdl","$repo/mvr/progs/v_plasmatrench.mdl","$repo/mvr/progs/v_quadlauncher.mdl","$repo/mvr/progs/v_mvrgren.mdl","$repo/mvr/progs/mvr_canister.mdl","$repo/mvr/progs/v_mvrmmml.mdl","$repo/mvr/progs/mvr_mmmlrack.mdl","$repo/mvr/progs/v_mvrflak.mdl","$repo/mvr/progs/mvr_flakshell.mdl","$repo/mvr/progs/v_mvrnail.mdl","$repo/mvr/progs/mvr_nailmag.mdl","$repo/mvr/progs/v_mvrrebar.mdl","$repo/mvr/progs/mvr_rebarbundle.mdl" "$Destination/mvr/progs"
 python "$repo/Misc/rover_body.py" "$Content/progs/player_qbj.mdl" "$Destination/mvr/progs/rover_body.mdl"
 if ($LASTEXITCODE) { throw "Rover model generation failed" }
 
+# The tracked Rover body and both articulated hands share QuakeVR's bind poses.
+foreach ($pattern in "vrbody.mdl","vrbody.md5*","rover_vr_*.tga","hand.mdl","hand_base.mdl","hand_rig*","finger_*.mdl") {
+    Copy-Item "$repo/mvr/progs/$pattern" "$Destination/mvr/progs" -Force
+}
+python "$repo/Misc/monolith_weapon_scale.py" "$Destination/mvr/progs"
+if ($LASTEXITCODE) { throw "Weapon scale calibration failed" }

@@ -204,7 +204,7 @@ void() twinnail_touch =
 	if (other.takedamage)
 	{
 		spawn_touchblood (other, self.dmg);
-		T_Damage (other, self, self.trueowner, self.dmg);
+		T_Damage (other, self, self.trueowner, self.dmg * MVR_HeadshotMultiplier(self.trueowner, other, self.origin));
 				
 		if (random() < 0.8)
 		{
